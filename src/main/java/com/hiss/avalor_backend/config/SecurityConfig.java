@@ -3,6 +3,7 @@ package com.hiss.avalor_backend.config;
 import com.hiss.avalor_backend.config.jwtAuth.JwtAccessTokenFilter;
 import com.hiss.avalor_backend.config.jwtAuth.JwtRefreshTokenFilter;
 import com.hiss.avalor_backend.config.jwtAuth.JwtTokenUtils;
+import com.hiss.avalor_backend.config.jwtAuth.LogoutHandlerService;
 import com.hiss.avalor_backend.config.user.UserManagerConfig;
 import com.hiss.avalor_backend.entity.RSAKeyRecord;
 import com.hiss.avalor_backend.repo.RefreshTokenRepo;
@@ -24,6 +25,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
@@ -50,6 +52,7 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
     private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
     private final RefreshTokenRepo refreshTokenRepo;
+    private final LogoutHandlerService logoutHandlerService;
 
     @Order(1)
     @Bean
@@ -103,6 +106,29 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                     ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
                 })
                 .httpBasic(withDefaults())
+                .build();
+    }
+
+    @Order(4)
+    @Bean
+    public SecurityFilterChain logoutSecurityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .securityMatcher(new AntPathRequestMatcher("/logout/**"))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtAccessTokenFilter(rsaKeyRecord,jwtTokenUtils), UsernamePasswordAuthenticationFilter.class)
+                .logout(logout -> logout
+                        .logoutUrl("/logout")
+                        .addLogoutHandler(logoutHandlerService)
+                        .logoutSuccessHandler(((request, response, authentication) -> SecurityContextHolder.clearContext()))
+                )
+                .exceptionHandling(ex -> {
+                    log.error("[SecurityConfig:logoutSecurityFilterChain] Exception due to :{}",ex);
+                    ex.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
+                    ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
+                })
                 .build();
     }
 
