@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: avalor-backend
+  profiles:
+    active: dev
+  #  Google login
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: 1031402019432-5hqk1ikfj2j24oirs4dp4sm63md0s3r6.apps.googleusercontent.com
+            client-secret: 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
+            client-name: GOOGLE
+            provider: google
+          yandex:
+            client-id: 186c2c4eec5e43948da3ff8965737d40
+            client-secret: b5e12ebeccd34996b6506b7b79928ca3
+            authorization-grant-type: authorization_code
+#            scope: login:email, login:info
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            client-name: YANDEX
+        provider:
+          yandex:
+            authorization-uri: https://oauth.yandex.ru/authorize
+            token-uri: https://oauth.yandex.ru/token
+            user-info-uri: https://login.yandex.ru/info
+            user-name-attribute: id
+      resourceserver:
+        jwt:
+          issuer-uri: https://accounts.google.com
+          jwk-set-uri: https://www.googleapis.com/oauth2/v3/certs
+
+logging:
+  level:
+    org:
+      springframework:
+        security: TRACE
+
+jwt:
+  rsa-private-key: classpath:certs/privateKey.pem
+  rsa-public-key: classpath:certs/publicKey.pem
