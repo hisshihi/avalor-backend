@@ -6,8 +6,11 @@ import com.hiss.avalor_backend.repo.RouteRepository;
 import com.hiss.avalor_backend.repo.TariffRepository;
 import com.hiss.avalor_backend.service.RouteGraphService;
 import com.hiss.avalor_backend.service.RouteService;
+import com.hiss.avalor_backend.service.TariffService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -18,10 +21,18 @@ import java.util.*;
 public class RouteServiceImpl implements RouteService {
 
     private final RouteRepository routeRepository;
-    private final TariffRepository tariffRepository;
+    private final TariffService tariffService;
     private final RouteGraphService routeGraphService;
 
+    // Очищение кеша
     @Override
+    @CacheEvict(value = "shortestPaths", allEntries = true)
+    public void refreshCache() {
+        log.info("Route cache has been cleared");
+    }
+
+    @Override
+    @Cacheable(value = "shortestPaths", key = "#from + '->' + #to")
     public List<Route> findShortestPath(String from, String to) {
         // Загрузим все маршруты из базы данных
         List<Route> allRoutes = routeRepository.findAll();
@@ -83,7 +94,7 @@ public class RouteServiceImpl implements RouteService {
     public double calculateCost(List<Route> path) {
         double totalCost = 0;
         for (Route route : path) {
-            Tariff tariff = tariffRepository.findByTransportType(route.getTransportType());
+            Tariff tariff = tariffService.findByTransportType(route.getTransportType());
             totalCost += route.getDistance() * tariff.getCostPerUnit();
         }
         return totalCost;

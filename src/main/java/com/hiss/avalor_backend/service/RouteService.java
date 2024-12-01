@@ -10,4 +10,6 @@ public interface RouteService {
 
     double calculateCost(List<Route> path);
 
+    void refreshCache();
+
 }
