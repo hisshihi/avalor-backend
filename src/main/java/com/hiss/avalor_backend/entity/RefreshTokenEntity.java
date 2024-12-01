@@ -4,7 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
-import java.util.List;
 import java.util.Objects;
 
 @Getter
@@ -13,20 +12,21 @@ import java.util.Objects;
 @NoArgsConstructor
 @Builder
 @Entity
-@Table(name = "_user")
-public class UserEntity {
+public class RefreshTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String username;
-    private String password;
-    private String roles;
+    @Column(length = 10000)
+    private String refreshToken;
 
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private boolean revoked;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     @ToString.Exclude
-    private List<RefreshTokenEntity> refreshTokenEntities;
+    private UserEntity user;
 
     @Override
     public final boolean equals(Object o) {
@@ -35,7 +35,7 @@ public class UserEntity {
         Class<?> oEffectiveClass = o instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        UserEntity that = (UserEntity) o;
+        RefreshTokenEntity that = (RefreshTokenEntity) o;
         return getId() != null && Objects.equals(getId(), that.getId());
     }
 
@@ -48,8 +48,7 @@ public class UserEntity {
     public String toString() {
         return getClass().getSimpleName() + "(" +
                "id = " + id + ", " +
-               "username = " + username + ", " +
-               "password = " + password + ", " +
-               "roles = " + roles + ")";
+               "refreshToken = " + refreshToken + ", " +
+               "revoked = " + revoked + ")";
     }
 }

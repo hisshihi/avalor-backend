@@ -1,9 +1,11 @@
 package com.hiss.avalor_backend.config;
 
 import com.hiss.avalor_backend.config.jwtAuth.JwtAccessTokenFilter;
+import com.hiss.avalor_backend.config.jwtAuth.JwtRefreshTokenFilter;
 import com.hiss.avalor_backend.config.jwtAuth.JwtTokenUtils;
 import com.hiss.avalor_backend.config.user.UserManagerConfig;
 import com.hiss.avalor_backend.entity.RSAKeyRecord;
+import com.hiss.avalor_backend.repo.RefreshTokenRepo;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -47,6 +49,7 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
     private final UserManagerConfig userManagerConfig;
     private final RSAKeyRecord rsaKeyRecord;
     private final JwtTokenUtils jwtTokenUtils;
+    private final RefreshTokenRepo refreshTokenRepo;
 
     @Order(1)
     @Bean
@@ -77,6 +80,25 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                 .addFilterBefore(new JwtAccessTokenFilter(rsaKeyRecord, jwtTokenUtils), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(ex -> {
                     log.error("[SecurityConfig:apiSecurityFilterChain] Exception due to :{}",ex);
+                    ex.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
+                    ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
+                })
+                .httpBasic(withDefaults())
+                .build();
+    }
+
+    @Order(3)
+    @Bean
+    public SecurityFilterChain refreshTokenSecurityFilterChain(HttpSecurity httpSecurity) throws Exception{
+        return httpSecurity
+                .securityMatcher(new AntPathRequestMatcher("/refresh-token/**"))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
+                .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .addFilterBefore(new JwtRefreshTokenFilter(rsaKeyRecord,jwtTokenUtils,refreshTokenRepo), UsernamePasswordAuthenticationFilter.class)
+                .exceptionHandling(ex -> {
+                    log.error("[SecurityConfig:refreshTokenSecurityFilterChain] Exception due to :{}",ex);
                     ex.authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint());
                     ex.accessDeniedHandler(new BearerTokenAccessDeniedHandler());
                 })
