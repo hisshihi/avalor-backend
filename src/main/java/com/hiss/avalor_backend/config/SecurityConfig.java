@@ -80,7 +80,7 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                 .securityMatcher(new AntPathRequestMatcher("/api/**"))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers("/api/delivery/calculate").permitAll();
+                    auth.requestMatchers("/api/delivery/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
