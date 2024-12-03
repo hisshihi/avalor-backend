@@ -61,7 +61,7 @@ public class RouteServiceImpl implements RouteService {
         if (cityFrom == null || cityTo == null || cityFrom.isBlank() || cityTo.isBlank()) {
             throw new IllegalArgumentException("Города отправления и назначения не могут быть пустыми.");
         }
-        log.debug("Входные данные валидны: город отправления = '{}', город назначения = '{}'.", cityFrom, cityTo);
+        log.info("Входные данные валидны: город отправления = '{}', город назначения = '{}'.", cityFrom, cityTo);
     }
 
     /**
@@ -69,7 +69,7 @@ public class RouteServiceImpl implements RouteService {
      */
     private void findRoutes(List<Route> allRoutes, String cityFrom, String cityTo,
                             List<List<RouteWithCost>> results) {
-        log.debug("Инициализация поиска маршрутов из '{}' в '{}'.", cityFrom, cityTo);
+        log.info("Инициализация поиска маршрутов из '{}' в '{}'.", cityFrom, cityTo);
         findRoutesRecursive(allRoutes, cityFrom, cityTo, new ArrayList<>(), new HashSet<>(), results);
     }
 
@@ -78,7 +78,7 @@ public class RouteServiceImpl implements RouteService {
      */
     private void findRoutesRecursive(List<Route> allRoutes, String currentCity, String destinationCity,
                                      List<Route> currentPath, Set<Route> visited, List<List<RouteWithCost>> results) {
-        log.debug("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
+        log.info("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
 
         for (Route route : allRoutes) {
             if (!route.getCityFrom().equalsIgnoreCase(currentCity) || visited.contains(route)) {
@@ -87,7 +87,7 @@ public class RouteServiceImpl implements RouteService {
                 continue;
             }
 
-            log.debug("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
+            log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
             currentPath.add(route);
             visited.add(route);
 
@@ -114,25 +114,15 @@ public class RouteServiceImpl implements RouteService {
         int totalCost = path.stream().mapToInt(this::calculateSegmentCost).sum();
         log.debug("Расчет общей стоимости маршрута: {}.", totalCost);
 
-        // Конвертация каждого сегмента маршрута в объект RouteWithCost.
-        return path.stream()
-                .map(route -> {
-                    int segmentCost = calculateSegmentCost(route); // Стоимость сегмента.
-                    log.trace("Расчет стоимости сегмента: {} -> {}, стоимость = {}.",
-                            route.getCityFrom(), route.getCityTo(), segmentCost);
-
-                    // Создание объекта RouteWithCost с общей стоимостью маршрута.
-                    return new RouteWithCost(route, segmentCost, totalCost);
-                })
-                .toList();
+        // Create a single RouteWithCost for the entire path.
+        return List.of(new RouteWithCost(path, totalCost));
     }
 
     /**
      * Сортировка маршрутов по общей стоимости.
      */
     private List<List<RouteWithCost>> sortRoutesByCost(List<List<RouteWithCost>> routes) {
-        routes.sort(Comparator.comparingInt(routeList ->
-                routeList.stream().mapToInt(RouteWithCost::getTotalCost).sum()));
+        routes.sort(Comparator.comparingInt(routeList -> routeList.get(0).getTotalCost())); // Access total cost from the first element
         log.info("Маршруты успешно отсортированы по стоимости.");
         return routes;
     }
@@ -159,7 +149,7 @@ public class RouteServiceImpl implements RouteService {
             log.warn("Неизвестный тип FILO: {}", route.getFilo());
         }
 
-        log.debug("Итоговая стоимость сегмента {} -> {} = {}.", route.getCityFrom(), route.getCityTo(), routeCost);
+        log.info("Итоговая стоимость сегмента {} -> {} = {}.", route.getCityFrom(), route.getCityTo(), routeCost);
         return routeCost;
     }
 
@@ -168,7 +158,7 @@ public class RouteServiceImpl implements RouteService {
      */
     private int getContainerRentCost(Route route) {
         int rentCost = 2000; // Константа для аренды контейнера.
-        log.debug("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
+        log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), rentCost);
         return rentCost;
     }
@@ -178,7 +168,7 @@ public class RouteServiceImpl implements RouteService {
      */
     private int getHandlingCost(Route route) {
         int handlingCost = 500; // Константа для обработки.
-        log.debug("Стоимость обработки для маршрута {} -> {}: {}.",
+        log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;
     }

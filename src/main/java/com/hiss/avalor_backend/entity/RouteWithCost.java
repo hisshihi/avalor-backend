@@ -3,18 +3,19 @@ package com.hiss.avalor_backend.entity;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.List;
+
 @Getter
 @Setter
 public class RouteWithCost {
 
-    private Route route;
+    private List<Route> route;
     private int totalCost;
-    private int segmentCost;
+//    private int segmentCost;
 
-    public RouteWithCost(Route route, int totalCost, int segmentCost) {
+    public RouteWithCost(List<Route> route, int totalCost) {
         this.route = route;
         this.totalCost = totalCost;
-        this.segmentCost = segmentCost;
     }
 
 }
