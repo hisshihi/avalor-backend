@@ -80,12 +80,25 @@ public class RouteServiceImpl implements RouteService {
                                      List<Route> currentPath, Set<Route> visited, List<List<RouteWithCost>> results) {
         log.info("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
 
+        // Ограничение длины маршрута: не более 1 промежуточных пунктов.
+        if (currentPath.size() > 1) {
+            log.debug("Достигнуто максимальное количество промежуточных городов: {}", currentPath);
+            return;
+        }
+
         for (Route route : allRoutes) {
+            // Проверяем, подходит ли маршрут.
             if (!route.getCityFrom().equalsIgnoreCase(currentCity) || visited.contains(route)) {
                 log.trace("Пропуск маршрута из '{}' в '{}' (либо не подходит, либо уже посещен).",
                         route.getCityFrom(), route.getCityTo());
                 continue;
             }
+
+            // Проверка согласованности портов и типов транспорта.
+//            if (!isValidPortSequence(currentPath, route)) {
+//                log.debug("Маршрут {} -> {} не согласован с предыдущими сегментами.", route.getCityFrom(), route.getCityTo());
+//                continue;
+//            }
 
             log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
             currentPath.add(route);
@@ -96,6 +109,7 @@ public class RouteServiceImpl implements RouteService {
                 log.info("Найден маршрут до конечного города '{}'.", destinationCity);
                 results.add(convertToRouteWithCosts(new ArrayList<>(currentPath)));
             } else {
+                // Продолжаем поиск рекурсивно.
                 findRoutesRecursive(allRoutes, route.getCityTo(), destinationCity, currentPath, visited, results);
             }
 
@@ -105,6 +119,33 @@ public class RouteServiceImpl implements RouteService {
             log.trace("Возврат к предыдущему маршруту: удален маршрут {} -> {}", route.getCityFrom(), route.getCityTo());
         }
     }
+
+    private boolean isValidPortSequence(List<Route> currentPath, Route nextRoute) {
+        if (currentPath.isEmpty()) {
+            return true; // Первый маршрут всегда валиден.
+        }
+
+        Route lastRoute = currentPath.get(currentPath.size() - 1);
+
+        // Проверяем, чтобы тип транспорта был согласован.
+        if ("Море".equals(nextRoute.getTransportType()) && !"Port".equals(lastRoute.getTransportType())) {
+            log.warn("Маршрут {} -> {} требует порта для перехода на корабль.", lastRoute.getCityTo(), nextRoute.getCityFrom());
+            return false;
+        }
+        if ("ЖД".equals(nextRoute.getTransportType()) && "Море".equals(lastRoute.getTransportType())) {
+            log.warn("Маршрут {} -> {} не может перейти с корабля на поезд.", lastRoute.getCityTo(), nextRoute.getCityFrom());
+            return false;
+        }
+
+        // Проверяем соответствие портов для морских маршрутов.
+        if ("Море".equals(nextRoute.getTransportType()) && !lastRoute.getPod().equals(nextRoute.getPol())) {
+            log.warn("Несогласованность портов: POD={} не совпадает с POL={}.", lastRoute.getPod(), nextRoute.getPol());
+            return false;
+        }
+
+        return true;
+    }
+
 
     /**
      * Конвертация списка маршрутов в список маршрутов с указанием стоимости.
@@ -157,7 +198,7 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости аренды контейнера.
      */
     private int getContainerRentCost(Route route) {
-        int rentCost = 2000; // Константа для аренды контейнера.
+        int rentCost = route.getCarrier().getContainerRentalPrice(); // Константа для аренды контейнера.
         log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), rentCost);
         return rentCost;
@@ -167,7 +208,7 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости обработки груза.
      */
     private int getHandlingCost(Route route) {
-        int handlingCost = 500; // Константа для обработки.
+        int handlingCost = 0; // Константа для обработки.
         log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;
