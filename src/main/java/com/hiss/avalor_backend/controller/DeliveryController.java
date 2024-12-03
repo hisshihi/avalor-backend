@@ -1,6 +1,7 @@
 package com.hiss.avalor_backend.controller;
 
 import com.hiss.avalor_backend.entity.Route;
+import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,10 +22,10 @@ public class DeliveryController {
     private final RouteService routeService;
 
     @GetMapping("/calculate")
-    public ResponseEntity<List<List<Route>>> calculateRoutes(
+    public ResponseEntity<List<List<RouteWithCost>>> calculateRoutes(
             @RequestParam String cityFrom,
             @RequestParam String cityTo) {
-        List<List<Route>> routes = routeService.calculateRoutes(cityFrom, cityTo);
+        List<List<RouteWithCost>> routes = routeService.calculateRoutes(cityFrom, cityTo);
         return ResponseEntity.ok(routes);
     }
 

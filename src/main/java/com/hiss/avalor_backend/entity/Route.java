@@ -1,12 +1,10 @@
 package com.hiss.avalor_backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
+import java.time.LocalDate;
 import java.util.Objects;
 
 @AllArgsConstructor
@@ -24,7 +22,27 @@ public class Route {
     private String cityFrom;
     private String cityTo;
     private String transportType;
-    private int cost;
+//    private int cost;
+
+    private String polCountry; // Страна порта погрузки
+    private String pol;        // Порт погрузки
+    private String pod;        // Порт разгрузки
+    @Transient
+    private String carrierShortName; // Короткое название перевозчика
+    private String eqpt;       // Тип оборудования
+    private String containerTypeSize; // Тип и размер контейнера
+    private LocalDate validTo; // Дата действия
+    private String filo;       // Free In, Liner Out
+    private String notes;      // Примечания
+    private String comments;   // Комментарии
+
+    @ManyToOne
+    @JoinColumn(name = "carrier_id", nullable = false)
+    private Carrier carrier;
+
+    public String getCarrierShortName() {
+        return carrier != null ? carrier.getName() : null;
+    }
 
     @Override
     public final boolean equals(Object o) {
@@ -49,6 +67,15 @@ public class Route {
                "cityFrom = " + cityFrom + ", " +
                "cityTo = " + cityTo + ", " +
                "transportType = " + transportType + ", " +
-               "cost = " + cost + ")";
+               "polCountry = " + polCountry + ", " +
+               "pol = " + pol + ", " +
+               "pod = " + pod + ", " +
+               "carrierShortName = " + carrierShortName + ", " +
+               "eqpt = " + eqpt + ", " +
+               "containerTypeSize = " + containerTypeSize + ", " +
+               "validTo = " + validTo + ", " +
+               "filo = " + filo + ", " +
+               "comments = " + comments + ", " +
+               "notes = " + notes + ")";
     }
 }
