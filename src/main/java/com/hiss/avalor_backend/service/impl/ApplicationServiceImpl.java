@@ -9,6 +9,7 @@ import com.hiss.avalor_backend.repo.AdditionalServiceRepo;
 import com.hiss.avalor_backend.repo.ApplicationRepo;
 import com.hiss.avalor_backend.repo.UserRepo;
 import com.hiss.avalor_backend.service.ApplicationService;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,18 +36,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final RouteService routeService;
     private final UserRepo userRepository;
     private final AdditionalServiceRepo additionalServiceRepo;
-
-    @CacheEvict(value = "userApplications", key = "#principal.name")
-    @Transactional
-    public void deleteApplicationById(Long applicationId, Principal principal) {
-        Optional<UserEntity> user = userRepository.findByUsername(principal.getName());
-        if (user.isEmpty()) {
-            throw new UsernameNotFoundException("User not found");
-        }
-
-        applicationRepository.deleteById(applicationId);
-    }
-
+    private final CacheService cacheService;
 
     @Override
     public void saveApplication(SaveApplicationDto dto, Principal principal) {
@@ -92,6 +82,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Сохранение заявки
         applicationRepository.save(application);
+
+        clearCache();
+    }
+
+    private void clearCache() {
+        cacheService.refreshCacheApplicationUser();
     }
 
     @Transactional
