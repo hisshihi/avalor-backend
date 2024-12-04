@@ -47,16 +47,29 @@ public class DeliveryController {
         RouteWithCost route = routeWithCosts.get(0);
         return new RouteDto(
                 route.getRoute().stream()
-                        .map(r -> new RouteSegmentDto(
-                                r.getCityFrom(),
-                                r.getCityTo(),
-                                r.getCarrier().getName(),
-                                r.getCarrier().getPrice(),
-                                r.getTransportType(),
-                                r.getContainerTypeSize(),
-                                r.getFilo(),
-                                r.getPol(),
-                                r.getPod()))
+                        .map(r -> {
+                            int price;
+                            if ("COC".equals(r.getContainerTypeSize())) {
+                                price = r.getCarrier().getPrice() + r.getCarrier().getContainerRentalPrice();
+                            } else if ("SOC".equals(r.getContainerTypeSize())) {
+                                price = r.getCarrier().getPrice();
+                            } else {
+                                price = 0;
+                            }
+
+                            return new RouteSegmentDto(
+                                    r.getCityFrom(),
+                                    r.getCityTo(),
+                                    r.getCarrier().getName(),
+                                    price,
+                                    r.getTransportType(),
+                                    r.getContainerTypeSize(),
+                                    r.getFilo(),
+                                    r.getPol(),
+                                    r.getPod()
+                            );
+
+                        })
                         .collect(Collectors.toList()),
                 route.getTotalCost()
         );

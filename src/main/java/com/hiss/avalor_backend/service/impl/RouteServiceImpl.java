@@ -179,13 +179,13 @@ public class RouteServiceImpl implements RouteService {
         if ("COC".equals(route.getContainerTypeSize())) {
             int rentCost = getContainerRentCost(route);
             routeCost += rentCost;
-            log.trace("Добавлена стоимость аренды контейнера: {}.", rentCost);
+            log.info("Добавлена стоимость аренды контейнера: {}.", rentCost);
         }
 
         if ("Liner Out".equals(route.getFilo())) {
             int handlingCost = getHandlingCost(route);
             routeCost += handlingCost;
-            log.trace("Добавлена стоимость обработки: {}.", handlingCost);
+            log.info("Добавлена стоимость обработки: {}.", handlingCost);
         } else if (!"Free In".equals(route.getFilo())) {
             log.warn("Неизвестный тип FILO: {}", route.getFilo());
         }
