@@ -36,8 +36,15 @@ public class Route {
     private String notes;      // Примечания
     private String comments;   // Комментарии
 
+    private String arrangementForRailwayDays;
+    private String transitTimeByTrainDays;
+    private String totalWithoutMovementDays;
+    private String totalTravelDays;
+    private String totalTotalTimeDays;
+
     @ManyToOne
     @JoinColumn(name = "carrier_id", nullable = false)
+    @ToString.Exclude
     private Carrier carrier;
 
     public String getCarrierShortName() {
@@ -75,7 +82,12 @@ public class Route {
                "containerTypeSize = " + containerTypeSize + ", " +
                "validTo = " + validTo + ", " +
                "filo = " + filo + ", " +
+               "notes = " + notes + ", " +
                "comments = " + comments + ", " +
-               "notes = " + notes + ")";
+               "arrangementForRailwayDays = " + arrangementForRailwayDays + ", " +
+               "transitTimeByTrainDays = " + transitTimeByTrainDays + ", " +
+               "totalWithoutMovementDays = " + totalWithoutMovementDays + ", " +
+               "totalTravelDays = " + totalTravelDays + ", " +
+               "totalTotalTimeDays = " + totalTotalTimeDays + ")";
     }
 }

@@ -92,6 +92,11 @@ public class RouteServiceImpl implements RouteService {
                 .notes(routeSaveDto.getNotes())
                 .comments(routeSaveDto.getComments())
                 .carrierShortName(carrier.getName())
+                .totalTravelDays(routeSaveDto.getTotalTravelDays())
+                .arrangementForRailwayDays(routeSaveDto.getArrangementForRailwayDays())
+                .totalTotalTimeDays(routeSaveDto.getTotalTotalTimeDays())
+                .transitTimeByTrainDays(routeSaveDto.getTransitTimeByTrainDays())
+                .totalWithoutMovementDays(routeSaveDto.getTotalWithoutMovementDays())
                 .build();
 
         routeRepo.save(route);

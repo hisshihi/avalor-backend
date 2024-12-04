@@ -61,7 +61,12 @@ public class DeliveryController {
                                     r.getContainerTypeSize(),
                                     r.getFilo(),
                                     r.getPol(),
-                                    r.getPod()
+                                    r.getPod(),
+                                    r.getArrangementForRailwayDays(),
+                                    r.getTransitTimeByTrainDays(),
+                                    r.getTotalWithoutMovementDays(),
+                                    r.getTotalTravelDays(),
+                                    r.getTotalTotalTimeDays()
                             );
 
                         })

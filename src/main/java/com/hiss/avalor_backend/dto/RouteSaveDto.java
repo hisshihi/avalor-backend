@@ -29,5 +29,11 @@ public class RouteSaveDto {
 
     private Long carrierId;
 
+    private String arrangementForRailwayDays;
+    private String transitTimeByTrainDays;
+    private String totalWithoutMovementDays;
+    private String totalTravelDays;
+    private String totalTotalTimeDays;
+
 
 }
