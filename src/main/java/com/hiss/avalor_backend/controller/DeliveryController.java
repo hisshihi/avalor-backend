@@ -1,10 +1,13 @@
 package com.hiss.avalor_backend.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.dto.RouteDto;
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
+import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +15,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -21,6 +26,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class DeliveryController {
+
+    private final ObjectMapper objectMapper;
+
+    private final RouteRepo routeRepo;
 
     private final RouteService routeService;
 
@@ -82,4 +91,24 @@ public class DeliveryController {
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PatchMapping("/{id}")
+    public Route patch(@PathVariable Long id, @RequestBody JsonNode patchNode) throws IOException {
+        Route route = routeRepo.findById(id).orElseThrow(() ->
+                new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
+
+        objectMapper.readerForUpdating(route).readValue(patchNode);
+
+        return routeRepo.save(route);
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_DELETE')")
+    @DeleteMapping("/{id}")
+    public Route delete(@PathVariable Long id) {
+        Route route = routeRepo.findById(id).orElse(null);
+        if (route != null) {
+            routeRepo.delete(route);
+        }
+        return route;
+    }
 }
