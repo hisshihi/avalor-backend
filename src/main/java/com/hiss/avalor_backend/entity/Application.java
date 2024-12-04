@@ -9,7 +9,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -48,6 +47,7 @@ public class Application {
     private String addressOfTheRecipient;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     private byte[] image1;
 
     private String nameOfTheSender;
@@ -67,6 +67,7 @@ public class Application {
     private int volumeOfTheProduct;
 
     @Lob
+    @Basic(fetch = FetchType.LAZY)
     private byte[] image2;
 
     private int allTotalCost;

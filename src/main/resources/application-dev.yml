@@ -6,7 +6,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
@@ -17,3 +17,7 @@ spring:
     open-in-view: false
   cache:
     type: simple
+  profiles:
+    hibernate:
+      jdbc:
+        non_contextual_creation: true

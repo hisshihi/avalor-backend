@@ -12,8 +12,12 @@ import com.hiss.avalor_backend.service.ApplicationService;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Hibernate;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -32,8 +36,20 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final UserRepo userRepository;
     private final AdditionalServiceRepo additionalServiceRepo;
 
+    @CacheEvict(value = "userApplications", key = "#principal.name")
+    @Transactional
+    public void deleteApplicationById(Long applicationId, Principal principal) {
+        Optional<UserEntity> user = userRepository.findByUsername(principal.getName());
+        if (user.isEmpty()) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        applicationRepository.deleteById(applicationId);
+    }
+
+
     @Override
-    public Application saveApplication(SaveApplicationDto dto, Principal principal) {
+    public void saveApplication(SaveApplicationDto dto, Principal principal) {
         Optional<UserEntity> user = userRepository.findByUsername(principal.getName());
         if (user.isEmpty()) {
             throw new UsernameNotFoundException("User not found");
@@ -75,7 +91,24 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .build();
 
         // Сохранение заявки
-        return applicationRepository.save(application);
+        applicationRepository.save(application);
+    }
+
+    @Transactional
+    @Override
+    @Cacheable(value = "userApplications", key = "#principal.name")
+    public List<Application> findAllByUser(Principal principal) {
+        Optional<UserEntity> user = userRepository.findByUsername(principal.getName());
+        if (user.isEmpty()) {
+            throw new UsernameNotFoundException("User not found");
+        }
+
+        List<Application> applications = applicationRepository.findByCreatedById(user.get().getId());
+        applications.forEach(application -> {
+            Hibernate.initialize(application.getRoutes()); // Инициализация ленивой коллекции
+            Hibernate.initialize(application.getAdditionalServices());
+        });
+        return applications;
     }
 
     private byte[] saveImage(MultipartFile image) {
