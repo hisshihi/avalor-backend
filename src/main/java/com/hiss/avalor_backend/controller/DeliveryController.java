@@ -58,6 +58,7 @@ public class DeliveryController {
                             }
 
                             return new RouteSegmentDto(
+                                    r.getId(),
                                     r.getCityFrom(),
                                     r.getCityTo(),
                                     r.getCarrier().getName(),
