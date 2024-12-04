@@ -22,15 +22,7 @@ public class DeliveryController {
 
     private final RouteService routeService;
 
-//    @PreAuthorize("permitAll()")
-//    @GetMapping("/calculate")
-//    public ResponseEntity<List<List<RouteWithCost>>> calculateRoutes(
-//            @RequestParam String cityFrom,
-//            @RequestParam String cityTo) {
-//        List<List<RouteWithCost>> routes = routeService.calculateRoutes(cityFrom, cityTo);
-//        return ResponseEntity.ok(routes);
-//    }
-
+    @PreAuthorize("permitAll()")
     @GetMapping("/calculate")
     public ResponseEntity<List<RouteDto>> calculateRoutes(
             @RequestParam String cityFrom,

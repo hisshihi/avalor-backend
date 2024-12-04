@@ -4,6 +4,7 @@ import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.RouteService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -52,6 +53,16 @@ public class RouteServiceImpl implements RouteService {
 
         // Сортировка маршрутов по стоимости.
         return sortRoutesByCost(results);
+    }
+
+    @Override
+    public Optional<Route> findById(Long id) {
+        return routeRepo.findById(id);
+    }
+
+    @Override
+    public Route getRouteById(Long id) {
+        return routeRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Route with ID " + " not found"));
     }
 
     /**
