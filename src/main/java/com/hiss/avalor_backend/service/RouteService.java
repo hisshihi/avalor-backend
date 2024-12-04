@@ -1,5 +1,6 @@
 package com.hiss.avalor_backend.service;
 
+import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 
@@ -13,4 +14,6 @@ public interface RouteService {
     Optional<Route> findById(Long id);
 
     Route getRouteById(Long aLong);
+
+    void create(RouteSaveDto routeSaveDto);
 }

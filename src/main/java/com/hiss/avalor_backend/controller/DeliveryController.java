@@ -1,7 +1,9 @@
 package com.hiss.avalor_backend.controller;
 
 import com.hiss.avalor_backend.dto.RouteDto;
+import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
+import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
@@ -68,11 +70,10 @@ public class DeliveryController {
         );
     }
 
-    @PreAuthorize("permitAll()")
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping("/calculate")
-    public ResponseEntity<?> saveRoute(@RequestBody RouteWithCost routeWithCost) {
-        log.info("Data: {}", routeWithCost);
-
+    public ResponseEntity<?> saveRoute(@RequestBody RouteSaveDto routeSaveDto) {
+        routeService.create(routeSaveDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
 

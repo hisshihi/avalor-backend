@@ -1,8 +1,11 @@
 package com.hiss.avalor_backend.service.impl;
 
+import com.hiss.avalor_backend.dto.RouteSaveDto;
+import com.hiss.avalor_backend.entity.Carrier;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +22,7 @@ import java.util.*;
 public class RouteServiceImpl implements RouteService {
 
     private final RouteRepo routeRepo;
+    private final CarrierService carrierService;
 
     /**
      * Метод для очистки кеша маршрутов.
@@ -63,6 +67,34 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public Route getRouteById(Long id) {
         return routeRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Route with ID " + " not found"));
+    }
+
+    @Override
+    public void create(RouteSaveDto routeSaveDto) {
+
+        Carrier carrier = carrierService.findById(routeSaveDto.getCarrierId())
+                .orElseThrow(
+                        () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
+                );
+
+        Route route = Route.builder()
+                .cityFrom(routeSaveDto.getCityFrom())
+                .cityTo(routeSaveDto.getCityTo())
+                .transportType(routeSaveDto.getTransportType())
+                .polCountry(routeSaveDto.getPolCountry())
+                .carrier(carrier)
+                .pol(routeSaveDto.getPol())
+                .pod(routeSaveDto.getPod())
+                .eqpt(routeSaveDto.getEqpt())
+                .containerTypeSize(routeSaveDto.getContainerTypeSize())
+                .validTo(routeSaveDto.getValidTo())
+                .filo(routeSaveDto.getFilo())
+                .notes(routeSaveDto.getNotes())
+                .comments(routeSaveDto.getComments())
+                .carrierShortName(carrier.getName())
+                .build();
+
+        routeRepo.save(route);
     }
 
     /**
