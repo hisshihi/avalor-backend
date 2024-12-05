@@ -1,6 +1,7 @@
 package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.SaveApplicationDto;
+import com.hiss.avalor_backend.dto.UpdateApplicationDto;
 import com.hiss.avalor_backend.entity.AdditionalService;
 import com.hiss.avalor_backend.entity.Application;
 import com.hiss.avalor_backend.entity.Route;
@@ -11,10 +12,10 @@ import com.hiss.avalor_backend.repo.UserRepo;
 import com.hiss.avalor_backend.service.ApplicationService;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -108,6 +109,207 @@ public class ApplicationServiceImpl implements ApplicationService {
         });
         return applications;
     }
+
+    @Override
+    @Transactional
+    @Cacheable(value = "userApplications", key = "#pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<Application> findAll(Pageable pageable) {
+        Page<Application> applications = applicationRepository.findAll(pageable);
+        applications.forEach(application -> {
+            Hibernate.initialize(application.getRoutes());
+            Hibernate.initialize(application.getAdditionalServices());
+        });
+        return applications;
+    }
+
+    @Transactional
+    @Override
+    public void updateApplication(Long id, UpdateApplicationDto dto) {
+        // Найти существующую заявку
+        Application application = applicationRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Application not found with ID: " + id));
+
+        // Обновить только переданные поля
+        if (dto.getNameOfTheRecipient() != null) {
+            application.setNameOfTheRecipient(dto.getNameOfTheRecipient());
+        }
+        if (dto.getInnOfTheRecipient() != null) {
+            application.setInnOfTheRecipient(dto.getInnOfTheRecipient());
+        }
+        if (dto.getAddressOfTheRecipient() != null) {
+            application.setAddressOfTheRecipient(dto.getAddressOfTheRecipient());
+        }
+        if (dto.getImage1() != null) {
+            application.setImage1(saveImage(dto.getImage1()));
+        }
+        if (dto.getNameOfTheSender() != null) {
+            application.setNameOfTheSender(dto.getNameOfTheSender());
+        }
+        if (dto.getEmailOfTheSender() != null) {
+            application.setEmailOfTheSender(dto.getEmailOfTheSender());
+        }
+        if (dto.getPhoneOfTheSender() != null) {
+            application.setPhoneOfTheSender(dto.getPhoneOfTheSender());
+        }
+        if (dto.getFullNameOfTheSender() != null) {
+            application.setFullNameOfTheSender(dto.getFullNameOfTheSender());
+        }
+        if (dto.getAddressOfTheSender() != null) {
+            application.setAddressOfTheSender(dto.getAddressOfTheSender());
+        }
+        if (dto.getImage2() != null) {
+            application.setImage2(saveImage(dto.getImage2()));
+        }
+        if (dto.getInvoice() != null) {
+            application.setInvoice(dto.getInvoice());
+        }
+        if (dto.getNameOfTheProduct() != null) {
+            application.setNameOfTheProduct(dto.getNameOfTheProduct());
+        }
+        if (dto.getQuantityOfTheProduct() != null) {
+            application.setQuantityOfTheProduct(dto.getQuantityOfTheProduct());
+        }
+        if (dto.getVolumeOfTheProduct() != null) {
+            application.setVolumeOfTheProduct(dto.getVolumeOfTheProduct());
+        }
+        if (dto.getTotalCostRoute() != null) {
+            application.setTotalCostRoute(dto.getTotalCostRoute());
+        }
+        if (dto.getAllTotalCost() != null) {
+            application.setAllTotalCost(dto.getAllTotalCost());
+        }
+
+        // Обновить маршруты, если переданы
+        if (dto.getIds() != null) {
+            List<Route> routes = dto.getIds().stream()
+                    .map(routeService::getRouteById)
+                    .collect(Collectors.toList());
+            application.setRoutes(routes);
+        }
+
+        // Обновить дополнительные услуги, если переданы
+        if (dto.getAdditionalServiceIds() != null) {
+            List<AdditionalService> additionalServices = dto.getAdditionalServiceIds().stream()
+                    .map(additionalServiceId -> additionalServiceRepo.findById(additionalServiceId)
+                            .orElseThrow(() -> new IllegalArgumentException("Additional service not found with ID: " + additionalServiceId)))
+                    .collect(Collectors.toList());
+            application.setAdditionalServices(additionalServices);
+        }
+
+        // Сохранить изменения
+        applicationRepository.save(application);
+
+        // Очистить кэш
+        clearCache();
+    }
+
+    @Transactional
+    @Override
+    public void updateApplicationWithUser(Long id, UpdateApplicationDto dto, Principal principal) {
+        UserEntity user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + principal.getName()));
+
+        Application application = applicationRepository.findByCreatedByIdAndId(user.getId(), id)
+                .orElseThrow(() -> new EntityNotFoundException("Application not found with ID: " + id + " for user: " + user.getUsername()));
+
+        // Обновить только переданные поля
+        if (dto.getNameOfTheRecipient() != null) {
+            application.setNameOfTheRecipient(dto.getNameOfTheRecipient());
+        }
+
+        if (dto.getInnOfTheRecipient() != null) {
+            application.setInnOfTheRecipient(dto.getInnOfTheRecipient());
+        }
+        if (dto.getAddressOfTheRecipient() != null) {
+            application.setAddressOfTheRecipient(dto.getAddressOfTheRecipient());
+        }
+        if (dto.getImage1() != null) {
+            application.setImage1(saveImage(dto.getImage1()));
+        }
+        if (dto.getNameOfTheSender() != null) {
+            application.setNameOfTheSender(dto.getNameOfTheSender());
+        }
+        if (dto.getEmailOfTheSender() != null) {
+            application.setEmailOfTheSender(dto.getEmailOfTheSender());
+        }
+        if (dto.getPhoneOfTheSender() != null) {
+            application.setPhoneOfTheSender(dto.getPhoneOfTheSender());
+        }
+        if (dto.getFullNameOfTheSender() != null) {
+            application.setFullNameOfTheSender(dto.getFullNameOfTheSender());
+        }
+        if (dto.getAddressOfTheSender() != null) {
+            application.setAddressOfTheSender(dto.getAddressOfTheSender());
+        }
+        if (dto.getImage2() != null) {
+            application.setImage2(saveImage(dto.getImage2()));
+        }
+        if (dto.getInvoice() != null) {
+            application.setInvoice(dto.getInvoice());
+        }
+        if (dto.getNameOfTheProduct() != null) {
+            application.setNameOfTheProduct(dto.getNameOfTheProduct());
+        }
+        if (dto.getQuantityOfTheProduct() != null) {
+            application.setQuantityOfTheProduct(dto.getQuantityOfTheProduct());
+        }
+        if (dto.getVolumeOfTheProduct() != null) {
+            application.setVolumeOfTheProduct(dto.getVolumeOfTheProduct());
+        }
+        if (dto.getTotalCostRoute() != null) {
+            application.setTotalCostRoute(dto.getTotalCostRoute());
+        }
+        if (dto.getAllTotalCost() != null) {
+            application.setAllTotalCost(dto.getAllTotalCost());
+        }
+
+        // Обновить маршруты, если переданы
+        if (dto.getIds() != null) {
+            List<Route> routes = dto.getIds().stream()
+                    .map(routeService::getRouteById)
+                    .collect(Collectors.toList());
+            application.setRoutes(routes);
+        }
+
+        // Обновить дополнительные услуги, если переданы
+        if (dto.getAdditionalServiceIds() != null) {
+            List<AdditionalService> additionalServices = dto.getAdditionalServiceIds().stream()
+                    .map(additionalServiceId -> additionalServiceRepo.findById(additionalServiceId)
+                            .orElseThrow(() -> new IllegalArgumentException("Additional service not found with ID: " + additionalServiceId)))
+                    .collect(Collectors.toList());
+            application.setAdditionalServices(additionalServices);
+        }
+
+        // Сохранить изменения
+        applicationRepository.save(application);
+
+        // Очистить кэш
+        clearCache();
+
+    }
+
+    @Override
+    @Transactional
+    public void deleteApplicationWithUser(Long id, Principal principal) {
+        UserEntity user = userRepository.findByUsername(principal.getName())
+                .orElseThrow(() -> new EntityNotFoundException("User not found: " + principal.getName()));
+
+        Application application = applicationRepository.findByCreatedByIdAndId(user.getId(), id)
+                .orElseThrow(() -> new EntityNotFoundException("Application not found with ID: " + id + " for user: " + user.getUsername()));
+
+        applicationRepository.deleteById(application.getId());
+
+        clearCache();
+
+    }
+
+    @Override
+    public void deleteApplication(Long id) {
+        Application application = applicationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Application not found"));
+        applicationRepository.delete(application);
+        clearCache();
+    }
+
 
     private byte[] saveImage(MultipartFile image) {
         try {
