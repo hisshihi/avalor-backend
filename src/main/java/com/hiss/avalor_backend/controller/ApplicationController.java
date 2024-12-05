@@ -6,6 +6,11 @@ import com.hiss.avalor_backend.service.ApplicationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,9 +39,14 @@ public class ApplicationController {
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping
-    public ResponseEntity<?> findUserApplications(Principal principal) {
-        List<Application> applications = applicationService.findAllByUser(principal);
-        return ResponseEntity.ok(applications);
+    public ResponseEntity<?> findUserApplications(
+            Principal principal, Pageable pageable, PagedResourcesAssembler<Application> assembler) {
+        Page<Application> applications = applicationService.findAllByUser(principal, pageable);
+
+        // Преобразуем Page<Application> в PagedModel
+        PagedModel<EntityModel<Application>> pagedModel = assembler.toModel(applications);
+
+        return ResponseEntity.ok(pagedModel);
     }
 
 }

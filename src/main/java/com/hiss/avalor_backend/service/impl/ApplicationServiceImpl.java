@@ -16,6 +16,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -92,14 +94,14 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     @Transactional
     @Override
-    @Cacheable(value = "userApplications", key = "#principal.name")
-    public List<Application> findAllByUser(Principal principal) {
+    @Cacheable(value = "userApplications", key = "#principal.name + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<Application> findAllByUser(Principal principal, Pageable pageable) {
         Optional<UserEntity> user = userRepository.findByUsername(principal.getName());
         if (user.isEmpty()) {
             throw new UsernameNotFoundException("User not found");
         }
 
-        List<Application> applications = applicationRepository.findByCreatedById(user.get().getId());
+        Page<Application> applications = applicationRepository.findByCreatedById(user.get().getId(), pageable);
         applications.forEach(application -> {
             Hibernate.initialize(application.getRoutes()); // Инициализация ленивой коллекции
             Hibernate.initialize(application.getAdditionalServices());
