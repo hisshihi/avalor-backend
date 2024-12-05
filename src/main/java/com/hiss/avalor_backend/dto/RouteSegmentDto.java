@@ -13,6 +13,10 @@ public class RouteSegmentDto {
     String cityFrom;
     String cityTo;
     String carrier;
+    Integer price;
+    Integer priceDollars;
+    Integer containerRentalPrice;
+    Integer containerRentalPriceDollars;
     int cost;
     String transportType;
     String containerTypeSize;

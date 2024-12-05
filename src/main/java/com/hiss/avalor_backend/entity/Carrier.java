@@ -24,7 +24,9 @@ public class Carrier {
 
     private String name;
     private Integer price;
+    private Integer priceDollars;
     private Integer containerRentalPrice;
+    private Integer containerRentalPriceDollars;
 
     @Override
     public final boolean equals(Object o) {
