@@ -18,7 +18,7 @@ public class PriceUpdateService {
     private final CarrierRepo carrierRepository;
     private final AdditionalServiceRepo additionalServiceRepository;
 
-    @Scheduled(fixedRate = 300000) // Каждые 5 минут
+//    @Scheduled(fixedRate = 300000) // Каждые 5 минут
     @Transactional
     public void updatePrices() {
         Double currentDollarRate = cbrXmlParser.getDollarRate();
