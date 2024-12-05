@@ -4,4 +4,6 @@ public interface CacheService {
 
     void refreshCacheApplicationUser();
 
+    void refreshCacheRoute();
+
 }

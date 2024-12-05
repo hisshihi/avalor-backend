@@ -8,6 +8,7 @@ import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +33,8 @@ public class DeliveryController {
     private final RouteRepo routeRepo;
 
     private final RouteService routeService;
+
+    private final CacheService cacheService;
 
     @PreAuthorize("permitAll()")
     @GetMapping("/calculate")
@@ -87,6 +90,7 @@ public class DeliveryController {
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping("/calculate")
     public ResponseEntity<?> saveRoute(@RequestBody RouteSaveDto routeSaveDto) {
+        clearCache();
         routeService.create(routeSaveDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
     }
@@ -94,6 +98,7 @@ public class DeliveryController {
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PatchMapping("/{id}")
     public Route patch(@PathVariable Long id, @RequestBody JsonNode patchNode) throws IOException {
+        clearCache();
         Route route = routeRepo.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
 
@@ -105,10 +110,16 @@ public class DeliveryController {
     @PreAuthorize("hasAuthority('SCOPE_DELETE')")
     @DeleteMapping("/{id}")
     public Route delete(@PathVariable Long id) {
+        clearCache();
         Route route = routeRepo.findById(id).orElse(null);
         if (route != null) {
             routeRepo.delete(route);
         }
         return route;
     }
+
+    private void clearCache() {
+        cacheService.refreshCacheRoute();
+    }
+
 }

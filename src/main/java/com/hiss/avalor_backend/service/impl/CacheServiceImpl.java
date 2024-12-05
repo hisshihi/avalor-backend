@@ -14,4 +14,11 @@ public class CacheServiceImpl implements CacheService {
     public void refreshCacheApplicationUser() {
         log.info("Кэш для userApplications успешно очищен.");
     }
+
+    @Override
+    @CacheEvict(value = "shortestPaths", allEntries = true)
+    public void refreshCacheRoute() {
+        log.info("Кеш для userApplications успешно очищен");
+    }
+
 }

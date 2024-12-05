@@ -5,6 +5,7 @@ import com.hiss.avalor_backend.entity.Carrier;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,14 +24,7 @@ public class RouteServiceImpl implements RouteService {
 
     private final RouteRepo routeRepo;
     private final CarrierService carrierService;
-
-    /**
-     * Метод для очистки кеша маршрутов.
-     */
-    @CacheEvict(value = "shortestPaths", allEntries = true)
-    public void refreshCache() {
-        log.info("Кэш для shortestPaths успешно очищен.");
-    }
+    private final CacheService cacheService;
 
     /**
      * Основной метод для расчета маршрутов между двумя городами.
@@ -100,6 +94,12 @@ public class RouteServiceImpl implements RouteService {
                 .build();
 
         routeRepo.save(route);
+
+        clearCache();
+    }
+
+    private void clearCache() {
+        cacheService.refreshCacheRoute();
     }
 
     /**
