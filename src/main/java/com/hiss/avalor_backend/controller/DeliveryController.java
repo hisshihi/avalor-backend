@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.dto.RouteDto;
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
+import com.hiss.avalor_backend.entity.Application;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
@@ -12,6 +13,11 @@ import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -101,6 +107,18 @@ public class DeliveryController {
         clearCache();
         routeService.create(routeSaveDto);
         return new ResponseEntity<>(HttpStatus.CREATED);
+    }
+
+    // Вывод всех маршрутов для админа
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @GetMapping("/all")
+    public ResponseEntity<?> getAll(Pageable pageable, PagedResourcesAssembler<Route> assembler) {
+        Page<Route> routes = routeRepo.findAll(pageable);
+
+        PagedModel<EntityModel<Route>> pagedModel = assembler.toModel(routes);
+
+        return ResponseEntity.ok(pagedModel);
+
     }
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
