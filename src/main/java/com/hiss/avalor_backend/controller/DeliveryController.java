@@ -40,8 +40,10 @@ public class DeliveryController {
     @GetMapping("/calculate")
     public ResponseEntity<List<RouteDto>> calculateRoutes(
             @RequestParam String cityFrom,
-            @RequestParam String cityTo) {
-        List<List<RouteWithCost>> routesWithCosts = routeService.calculateRoutes(cityFrom, cityTo);
+            @RequestParam String cityTo,
+            @RequestParam String time,
+            @RequestParam String weight) {
+        List<List<RouteWithCost>> routesWithCosts = routeService.calculateRoutes(cityFrom, cityTo, time, weight);
         List<RouteDto> routesDTO = routesWithCosts.stream()
                 .map(this::convertToRouteDTO)
                 .collect(Collectors.toList());
@@ -72,6 +74,8 @@ public class DeliveryController {
                                     r.getCarrier().getPriceDollars(),
                                     r.getCarrier().getContainerRentalPrice(),
                                     r.getCarrier().getContainerRentalPriceDollars(),
+                                    r.getValidTo(),
+                                    r.getEqpt(),
                                     price,
                                     r.getTransportType(),
                                     r.getContainerTypeSize(),

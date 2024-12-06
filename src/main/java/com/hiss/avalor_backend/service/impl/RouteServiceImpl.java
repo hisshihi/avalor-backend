@@ -15,6 +15,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -32,20 +34,32 @@ public class RouteServiceImpl implements RouteService {
      */
     @Override
     @Cacheable(value = "shortestPaths", key = "#cityFrom + '->' + #cityTo")
-    public List<List<RouteWithCost>> calculateRoutes(String cityFrom, String cityTo) {
+    public List<List<RouteWithCost>> calculateRoutes(String cityFrom, String cityTo, String time, String weight) {
         validateInputs(cityFrom, cityTo);
 
         log.info("Запуск расчета маршрутов из '{}' в '{}'.", cityFrom, cityTo);
 
         // Получение всех доступных маршрутов из базы данных.
         List<Route> allRoutes = routeRepo.findAll();
-        log.debug("Найдено {} маршрутов в базе данных.", allRoutes.size());
+        log.info("Найдено {} маршрутов в базе данных.", allRoutes.size());
+
+        // Парсинг времени с учётом формата
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+        LocalDate filterTime = LocalDate.parse(time, formatter);
+
+        // Фильтрация маршрутов по времени и типу оборудования.
+        List<Route> filteredRoutes = allRoutes.stream()
+                .filter(route -> route.getValidTo().isAfter(filterTime) || route.getValidTo().isEqual(filterTime))
+                .filter(route -> route.getEqpt().equalsIgnoreCase(weight))
+                .toList();
+
+        log.info("После фильтрации осталось {} маршрутов.", filteredRoutes.size());
 
         // Список для хранения всех возможных маршрутов.
         List<List<RouteWithCost>> results = new ArrayList<>();
 
         // Поиск всех возможных маршрутов.
-        findRoutes(allRoutes, cityFrom, cityTo, results);
+        findRoutes(filteredRoutes, cityFrom, cityTo, results);
 
         log.info("Найдено {} маршрутов из '{}' в '{}'.", results.size(), cityFrom, cityTo);
 
@@ -141,12 +155,6 @@ public class RouteServiceImpl implements RouteService {
                         route.getCityFrom(), route.getCityTo());
                 continue;
             }
-
-            // Проверка согласованности портов и типов транспорта.
-//            if (!isValidPortSequence(currentPath, route)) {
-//                log.debug("Маршрут {} -> {} не согласован с предыдущими сегментами.", route.getCityFrom(), route.getCityTo());
-//                continue;
-//            }
 
             log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
             currentPath.add(route);

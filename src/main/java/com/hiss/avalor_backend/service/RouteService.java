@@ -9,7 +9,7 @@ import java.util.Optional;
 
 public interface RouteService {
 
-    List<List<RouteWithCost>> calculateRoutes(String cityFrom, String cityTo);
+    List<List<RouteWithCost>> calculateRoutes(String cityFrom, String cityTo, String time, String weight);
 
     Optional<Route> findById(Long id);
 

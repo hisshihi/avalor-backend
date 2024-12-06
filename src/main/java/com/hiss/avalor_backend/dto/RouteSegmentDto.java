@@ -4,6 +4,8 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.time.LocalDate;
+
 @Getter
 @Setter
 @AllArgsConstructor
@@ -17,6 +19,8 @@ public class RouteSegmentDto {
     Integer priceDollars;
     Integer containerRentalPrice;
     Integer containerRentalPriceDollars;
+    LocalDate validTo;
+    String eqpt;
     int cost;
     String transportType;
     String containerTypeSize;
