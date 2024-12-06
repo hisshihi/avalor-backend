@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/excessive-use-of-container-entity")
@@ -26,9 +27,8 @@ public class ExcessiveUseOfContainerController {
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping
-    public PagedModel<ExcessiveUseOfContainerEntity> getList(Pageable pageable) {
-        Page<ExcessiveUseOfContainerEntity> excessiveUseOfContainerEntities = excessiveUseOfContainerRepo.findAll(pageable);
-        return new PagedModel<>(excessiveUseOfContainerEntities);
+    public List<ExcessiveUseOfContainerEntity> getList() {
+        return excessiveUseOfContainerRepo.findAll();
     }
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
