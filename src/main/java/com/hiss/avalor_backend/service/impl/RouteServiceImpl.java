@@ -51,6 +51,7 @@ public class RouteServiceImpl implements RouteService {
         List<Route> filteredRoutes = allRoutes.stream()
                 .filter(route -> route.getValidTo().isAfter(filterTime) || route.getValidTo().isEqual(filterTime))
                 .filter(route -> route.getEqpt().equalsIgnoreCase(weight))
+                .filter(route -> route.getCarrier().isActive())
                 .toList();
 
         log.info("После фильтрации осталось {} маршрутов.", filteredRoutes.size());

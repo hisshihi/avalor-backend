@@ -37,10 +37,11 @@ public class JwtTokenGenerator {
 
         String permissions = getPermissionsFromRoles(roles);
 
+        // TODO: обязательно поменять время жизни токена
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(authentication.getName())
                 .issuedAt(Instant.now())
-                .expiresAt(Instant.now().plus(15, ChronoUnit.MINUTES))
+                .expiresAt(Instant.now().plus(15, ChronoUnit.HOURS))
                 .subject(authentication.getName())
                 .claim("scope", permissions)
                 .build();

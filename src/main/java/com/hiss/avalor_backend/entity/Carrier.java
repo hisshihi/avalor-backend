@@ -1,9 +1,6 @@
 package com.hiss.avalor_backend.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
@@ -27,6 +24,8 @@ public class Carrier {
     private Integer priceDollars;
     private Integer containerRentalPrice;
     private Integer containerRentalPriceDollars;
+
+    private boolean active;
 
     @Override
     public final boolean equals(Object o) {

@@ -198,3 +198,6 @@ POST, PATH принимают
 private String toTenDays;
 private String fromElevenToTwentyOneDays;
 private String fromTwentyTwoToNinetyNineDays;
+
+
+Изменить удаление маршрута, без удаления заявки

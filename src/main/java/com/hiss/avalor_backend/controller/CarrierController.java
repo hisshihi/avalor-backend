@@ -3,8 +3,11 @@ package com.hiss.avalor_backend.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.entity.Carrier;
+import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.repo.CarrierRepo;
+import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.CarrierService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,9 +28,12 @@ public class CarrierController {
 
     private final ObjectMapper objectMapper;
 
+    private final RouteRepo routeRepo;
+
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping
     public Carrier create(@RequestBody Carrier carrier) {
+        carrier.setActive(true);
         return carrierRepo.save(carrier);
     }
 
@@ -50,11 +56,11 @@ public class CarrierController {
 
     @PreAuthorize("hasAuthority('SCOPE_DELETE')")
     @DeleteMapping("/{id}")
-    public Carrier delete(@PathVariable Long id) {
+    public void delete(@PathVariable Long id) {
         Carrier carrier = carrierRepo.findById(id).orElse(null);
-        if (carrier != null) {
-            carrierRepo.delete(carrier);
+        if (carrier != null && carrier.isActive()) { // Проверяем активность
+            carrier.setActive(false); // Деактивируем перевозчика
+            carrierRepo.save(carrier); // Сохраняем изменения
         }
-        return carrier;
     }
 }

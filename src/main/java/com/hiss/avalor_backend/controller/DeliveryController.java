@@ -8,9 +8,11 @@ import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.Application;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
+import com.hiss.avalor_backend.repo.ApplicationRepo;
 import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
@@ -41,6 +43,8 @@ public class DeliveryController {
     private final RouteService routeService;
 
     private final CacheService cacheService;
+
+    private final ApplicationRepo applicationRepo;
 
     @PreAuthorize("permitAll()")
     @GetMapping("/calculate")
@@ -135,14 +139,32 @@ public class DeliveryController {
 
     @PreAuthorize("hasAuthority('SCOPE_DELETE')")
     @DeleteMapping("/{id}")
-    public Route delete(@PathVariable Long id) {
+    @Transactional
+    public ResponseEntity<?> delete(@PathVariable Long id) {
         clearCache();
+
+        // Найти маршрут
         Route route = routeRepo.findById(id).orElse(null);
-        if (route != null) {
-            routeRepo.delete(route);
+        if (route == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Route not found");
         }
-        return route;
+
+        // Найти заявки, связанные с маршрутом
+        List<Application> applications = applicationRepo.findByRoutesId(route.getId());
+
+        // Удалить связь маршрута с заявками
+        for (Application application : applications) {
+            application.getRoutes().remove(route);
+            applicationRepo.save(application); // Сохранить изменения
+        }
+
+        // Удалить маршрут
+        routeRepo.delete(route);
+
+        return ResponseEntity.ok("Route and related applications have been deleted");
     }
+
 
     private void clearCache() {
         cacheService.refreshCacheRoute();
