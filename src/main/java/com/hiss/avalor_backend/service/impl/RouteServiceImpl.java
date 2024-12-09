@@ -33,7 +33,7 @@ public class RouteServiceImpl implements RouteService {
      * Использует кеширование для оптимизации повторных запросов.
      */
     @Override
-    @Cacheable(value = "shortestPaths", key = "#cityFrom + '->' + #cityTo")
+    @Cacheable(value = "shortestPaths", key = "#cityFrom + '->' + #cityTo + ':' + #time + ':' + #weight")
     public List<List<RouteWithCost>> calculateRoutes(String cityFrom, String cityTo, String time, String weight) {
         validateInputs(cityFrom, cityTo);
 
