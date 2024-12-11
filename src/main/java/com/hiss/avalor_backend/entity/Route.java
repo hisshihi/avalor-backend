@@ -36,6 +36,8 @@ public class Route {
     private String notes;      // Примечания
     private String comments;   // Комментарии
 
+    private LocalDate arrivalDate;
+
     private String arrangementForRailwayDays;
     private String transitTimeByTrainDays;
     private String totalWithoutMovementDays;

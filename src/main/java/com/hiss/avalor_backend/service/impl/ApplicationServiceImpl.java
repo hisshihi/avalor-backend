@@ -81,6 +81,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .createdBy(user.get())
                 .routes(routes)
                 .additionalServices(additionalServices) // Устанавливаем дополнительные услуги
+                .line(dto.getLine())
+                .comment(dto.getComment())
+                .ship(dto.getShip())
+                .cityTo(dto.getCityTo())
+                .cityFrom(dto.getCityFrom())
+                .placeDropOff(dto.getPlaceDropOff())
+                .portOfArrival(dto.getPortOfArrival())
+                .placeDropOff(dto.getPlaceDropOff())
+                .typeOfEquipment(dto.getTypeOfEquipment())
+                .freightForwarder(dto.getFreightForwarder())
                 .build();
 
         // Сохранение заявки

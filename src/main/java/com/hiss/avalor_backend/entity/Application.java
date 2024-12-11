@@ -66,6 +66,17 @@ public class Application {
     private int quantityOfTheProduct;
     private int volumeOfTheProduct;
 
+    private String cityFrom;
+    private String cityTo;
+    private String portOfArrival; // Порт прибытия
+    private String placeDropOff; // Место drop off
+    private String ship; // Судно
+    private String typeOfEquipment; // Тип оборудования
+    private String line; // Линия
+    private String freightForwarder; // Экспедитор в порту
+    @Column(length = 500)
+    private String comment; // Дополительные комментарии
+
     @Lob
     @Basic(fetch = FetchType.LAZY)
     private byte[] image2;

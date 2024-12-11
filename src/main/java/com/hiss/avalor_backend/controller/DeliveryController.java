@@ -85,6 +85,7 @@ public class DeliveryController {
                                     r.getCarrier().getContainerRentalPrice(),
                                     r.getCarrier().getContainerRentalPriceDollars(),
                                     r.getValidTo(),
+                                    r.getArrivalDate(),
                                     r.getEqpt(),
                                     price,
                                     r.getTransportType(),
