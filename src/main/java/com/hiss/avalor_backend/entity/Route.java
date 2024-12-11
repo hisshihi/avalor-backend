@@ -38,11 +38,19 @@ public class Route {
 
     private LocalDate arrivalDate;
 
-    private String arrangementForRailwayDays;
-    private String transitTimeByTrainDays;
-    private String totalWithoutMovementDays;
-    private String totalTravelDays;
-    private String totalTotalTimeDays;
+    private String arrangementForRailwayDays; // Постановка на жд, дней
+    private String transitTimeByTrainDays; // Транзитное время на жд, дней
+    private String totalWithoutMovementDays; // Итого без движения, дней
+    private String totalTravelDays; // Итого в пути, дней
+    private String totalTotalTimeDays; // Итого общее время, дней
+
+    @ManyToOne
+    @JoinColumn(name = "storage_at_the_port_of_arrival_entity_id")
+    private StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity;
+
+    @ManyToOne
+    @JoinColumn(name = "storage_at_the_railway_of_arrival_entity_id")
+    private StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity;
 
     @ManyToOne
     @JoinColumn(name = "carrier_id", nullable = false)

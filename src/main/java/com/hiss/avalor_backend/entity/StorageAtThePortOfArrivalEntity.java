@@ -25,6 +25,12 @@ public class StorageAtThePortOfArrivalEntity {
     private String toTenDays;
     private String fromElevenToTwentyOneDays;
     private String fromTwentyTwoToNinetyNineDays;
+    private String name;
+
+    // Цены
+    private Integer priceToTenDays;
+    private Integer priceFromElevenToTwentyOneDays;
+    private Integer priceFromTwentyTwoToNinetyNineDays;
 
     @Override
     public final boolean equals(Object o) {
