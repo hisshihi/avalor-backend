@@ -11,9 +11,9 @@ import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -111,6 +111,12 @@ public class RouteServiceImpl implements RouteService {
         routeRepo.save(route);
 
         clearCache();
+    }
+
+    @Override
+    @Transactional
+    public List<Route> findMany(List<Long> ids) {
+        return routeRepo.findAllById(ids);
     }
 
     private void clearCache() {

@@ -46,6 +46,13 @@ public class DeliveryController {
 
     private final ApplicationRepo applicationRepo;
 
+    @PreAuthorize("hasAuthority('SCOPE_READ')")
+    @GetMapping("/by-ids")
+    public ResponseEntity<List<Route>> getMany(@RequestParam List<Long> ids) {
+        List<Route> routes = routeService.findMany(ids);
+        return ResponseEntity.ok(routes);
+    }
+
     @PreAuthorize("permitAll()")
     @GetMapping("/calculate")
     public ResponseEntity<List<RouteDto>> calculateRoutes(
