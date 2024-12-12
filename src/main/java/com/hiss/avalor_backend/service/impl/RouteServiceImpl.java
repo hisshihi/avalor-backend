@@ -2,11 +2,13 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.entity.Carrier;
+import com.hiss.avalor_backend.entity.Cities;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
+import com.hiss.avalor_backend.service.CitiesService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +29,7 @@ public class RouteServiceImpl implements RouteService {
     private final RouteRepo routeRepo;
     private final CarrierService carrierService;
     private final CacheService cacheService;
+    private final CitiesService citiesService;
 
     /**
      * Основной метод для расчета маршрутов между двумя городами.
@@ -111,7 +114,31 @@ public class RouteServiceImpl implements RouteService {
         routeRepo.save(route);
 
         clearCache();
+
+        // Проверка и сохранение города
+        saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
+
     }
+
+    private void saveUniqueCities(String cityFrom, String cityTo) {
+        // Проверяем, существуют ли города
+        boolean cityFromExists = citiesService.existsByCity(cityFrom);
+        boolean cityToExists = citiesService.existsByCity(cityTo);
+
+        // Сохраняем только те города, которые ещё не существуют
+        if (!cityFromExists) {
+            Cities newCityFrom = new Cities();
+            newCityFrom.setCity(cityFrom);
+            citiesService.save(newCityFrom);
+        }
+        if (!cityToExists) {
+            Cities newCityTo = new Cities();
+            newCityTo.setCity(cityTo);
+            citiesService.save(newCityTo);
+        }
+    }
+
+
 
     @Override
     @Transactional
