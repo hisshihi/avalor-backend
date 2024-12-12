@@ -2,7 +2,7 @@ spring:
   application:
     name: avalor-backend
   profiles:
-    active: dev
+    active: prod
   #  Google login
   security:
     oauth2:
