@@ -1,8 +1,8 @@
 spring:
   application:
     name: avalor-backend
-  profiles:
-    active: prod
+  #  profiles:
+  #    active: prod
   #  Google login
   security:
     oauth2:
@@ -17,7 +17,7 @@ spring:
             client-id: 186c2c4eec5e43948da3ff8965737d40
             client-secret: b5e12ebeccd34996b6506b7b79928ca3
             authorization-grant-type: authorization_code
-#            scope: login:email, login:info
+            #            scope: login:email, login:info
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             client-name: YANDEX
         provider:
@@ -40,3 +40,13 @@ logging:
 jwt:
   rsa-private-key: classpath:certs/privateKey.pem
   rsa-public-key: classpath:certs/publicKey.pem
+
+  datasource:
+    url: jdbc:postgresql://postgres.railway.internal:5432/railway
+    username: postgres
+    password: FohjRfchPYyidOVeekySoDajfnHvagum
+    driver-class-name: org.postgresql.Driver
+    jpa:
+      hibernate:
+        ddl-auto: update # или validate для существующей схемы
+      show-sql: true
