@@ -1,8 +1,8 @@
 spring:
   application:
     name: avalor-backend
-  #  profiles:
-  #    active: prod
+    profiles:
+      active: prod
   #  Google login
   security:
     oauth2:
@@ -40,13 +40,3 @@ logging:
 jwt:
   rsa-private-key: classpath:certs/privateKey.pem
   rsa-public-key: classpath:certs/publicKey.pem
-
-  datasource:
-    url: jdbc:postgresql://postgres.railway.internal:5432/railway
-    username: postgres
-    password: FohjRfchPYyidOVeekySoDajfnHvagum
-    driver-class-name: org.postgresql.Driver
-    jpa:
-      hibernate:
-        ddl-auto: update # или validate для существующей схемы
-      show-sql: true

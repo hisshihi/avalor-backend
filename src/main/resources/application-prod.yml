@@ -1,12 +1,12 @@
 spring:
   datasource:
+    url: jdbc:postgresql://postgres.railway.internal:5432/railway
     username: postgres
-    password: FxTvtphEegnPKVASKQfkLQEcuNWOwSXA
-    url: jdbc:postgresql://junction.proxy.rlwy.net:17646/railway
+    password: FohjRfchPYyidOVeekySoDajfnHvagum
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     show-sql: true
     properties:
       hibernate:
