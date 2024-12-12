@@ -1,0 +1,14 @@
+---
+meta:
+  environment: jvm
+  toolchain:
+    name: gradle
+    version: 21
+build:
+  artifacts:
+    build/libs/*.jar: /
+  args: -Dserver.port=8080
+run:
+  jarName: avalor-backend-0.0.1-SNAPSHOT.jar
+  persistenceMount: /data
+  containerPort: 8080

@@ -1,7 +1,7 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres.railway.internal:5432/railway
-    username: postgres
+    url: jdbc:postgresql://amvera-hiss-cnpg-avalog-postgres-rw:5432/avalog
+    username: avalog
     password: FohjRfchPYyidOVeekySoDajfnHvagum
     driver-class-name: org.postgresql.Driver
   jpa:
