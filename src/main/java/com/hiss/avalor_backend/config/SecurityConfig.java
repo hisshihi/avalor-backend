@@ -163,7 +163,12 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://localhost:8081", "http://localhost:5173", "https://avalog-front-admin.onrender.com")
+                        .allowedOrigins(
+                                "http://localhost:8081",
+                                "http://localhost:5173",
+                                "https://avalog-front-admin.onrender.com",
+                                "https://api.render.com/deploy/srv-cte8e1bqf0us739ljav0?key=Vt2kDp-5qGA",
+                                "https://api.render.com/deploy/srv-cte831lumphs73dfqvv0?key=4O23VCJCLMY")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowCredentials(true)
                         .allowedHeaders("*")
