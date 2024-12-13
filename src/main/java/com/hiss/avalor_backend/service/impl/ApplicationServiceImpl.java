@@ -115,7 +115,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             idsAdditionalServices.add(additionalService);
         }
 
-        String title = "I`d: " + applicationId + "\n" + cityFrom + " -> " + cityTo + "\n Цена перевозки: " + priceForRoutes + "\n Ids доп услуг: " + idsAdditionalServices + "\n Пользователь: " + username;
+        String title = "Id: " + applicationId + "\n" + cityFrom + " -> " + cityTo + "\n Цена перевозки: " + priceForRoutes + "\n Ids доп услуг: " + idsAdditionalServices + "\n Пользователь: " + username;
         log.info("Заголовок: {}. Цена: {}", title, allTotalCost);
 
         AmoCRMLeadRequest amoCRMLeadRequest = new AmoCRMLeadRequest();
