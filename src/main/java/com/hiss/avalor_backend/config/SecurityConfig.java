@@ -85,7 +85,7 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/delivery/**").permitAll();
-                    auth.requestMatchers(HttpMethod.GET,"/api/city").permitAll();
+                    auth.requestMatchers(HttpMethod.GET,"/api/city/**").permitAll();
                     auth.anyRequest().authenticated();
                 })
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(withDefaults()))
