@@ -12,6 +12,8 @@ import com.hiss.avalor_backend.repo.UserRepo;
 import com.hiss.avalor_backend.service.ApplicationService;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
+import com.hiss.avalor_backend.util.AmoCRMLeadRequest;
+import com.hiss.avalor_backend.util.AmoCrmService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -40,6 +43,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final UserRepo userRepository;
     private final AdditionalServiceRepo additionalServiceRepo;
     private final CacheService cacheService;
+    private final AmoCrmService amoCrmService;
 
     @Override
     public void saveApplication(SaveApplicationDto dto, Principal principal) {
@@ -97,6 +101,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationRepository.save(application);
 
         clearCache();
+
+        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routes, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost());
+    }
+
+    private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost) {
+        List<Integer> priceForRoutes = new ArrayList<>();
+        for (Route route : routes) {
+            priceForRoutes.add(route.getCarrier().getPrice());
+        }
+        List<Long> idsAdditionalServices = new ArrayList<>();
+        for (Long additionalService : additionalServices) {
+            idsAdditionalServices.add(additionalService);
+        }
+
+        String title = cityFrom + " -> " + cityTo + "\n Цена перевозки " + priceForRoutes + "\n Ids доп услуг " + idsAdditionalServices + "\n Пользователь " + username;
+        log.info("Заголовок: {}. Цена: {}", title, allTotalCost);
+
+        AmoCRMLeadRequest amoCRMLeadRequest = new AmoCRMLeadRequest();
+        amoCRMLeadRequest.setName(title);
+        amoCRMLeadRequest.setPrice(allTotalCost);
+
+        amoCrmService.createLead(amoCRMLeadRequest);
     }
 
     private void clearCache() {
