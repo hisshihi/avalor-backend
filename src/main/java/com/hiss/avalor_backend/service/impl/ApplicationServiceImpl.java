@@ -102,10 +102,10 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         clearCache();
 
-        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routes, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost());
+        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routes, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost(), application.getId());
     }
 
-    private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost) {
+    private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost, Long applicationId) {
         List<Integer> priceForRoutes = new ArrayList<>();
         for (Route route : routes) {
             priceForRoutes.add(route.getCarrier().getPrice());
@@ -115,7 +115,7 @@ public class ApplicationServiceImpl implements ApplicationService {
             idsAdditionalServices.add(additionalService);
         }
 
-        String title = cityFrom + " -> " + cityTo + "\n Цена перевозки " + priceForRoutes + "\n Ids доп услуг " + idsAdditionalServices + "\n Пользователь " + username;
+        String title = "I`d: " + applicationId + "\n" + cityFrom + " -> " + cityTo + "\n Цена перевозки: " + priceForRoutes + "\n Ids доп услуг: " + idsAdditionalServices + "\n Пользователь: " + username;
         log.info("Заголовок: {}. Цена: {}", title, allTotalCost);
 
         AmoCRMLeadRequest amoCRMLeadRequest = new AmoCRMLeadRequest();
