@@ -333,15 +333,25 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application application = applicationRepository.findByCreatedByIdAndId(user.getId(), id)
                 .orElseThrow(() -> new EntityNotFoundException("Application not found with ID: " + id + " for user: " + user.getUsername()));
 
+        // Очищаем связи между заявками и маршрутами
+        application.getRoutes().clear();
+        applicationRepository.save(application);
+
+        // Удаляем заявку
         applicationRepository.deleteById(application.getId());
 
         clearCache();
 
     }
 
+    @Transactional
     @Override
     public void deleteApplication(Long id) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Application not found"));
+
+        application.getRoutes().clear();
+        applicationRepository.save(application);
+
         applicationRepository.delete(application);
         clearCache();
     }
