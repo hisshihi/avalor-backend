@@ -167,7 +167,8 @@ public class SecurityConfig extends SecurityConfigurerAdapter<DefaultSecurityFil
                                 "http://localhost:8081",
                                 "http://localhost:5173",
                                 "https://avalog-front-admin.onrender.com",
-                                "https://test-d11j.onrender.com")
+                                "https://test-d11j.onrender.com",
+                                "http://localhost:5174")
                         .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
                         .allowCredentials(true)
                         .allowedHeaders("*")
