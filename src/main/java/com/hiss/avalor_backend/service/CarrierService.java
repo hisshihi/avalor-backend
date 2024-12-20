@@ -8,4 +8,5 @@ public interface CarrierService {
 
     Optional<Carrier> findById(Long id);
 
+    Optional<Carrier> findByName(String carrierName);
 }

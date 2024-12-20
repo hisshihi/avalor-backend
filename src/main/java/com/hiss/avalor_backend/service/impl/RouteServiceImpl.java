@@ -1,11 +1,9 @@
 package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.RouteSaveDto;
-import com.hiss.avalor_backend.entity.Carrier;
-import com.hiss.avalor_backend.entity.Cities;
-import com.hiss.avalor_backend.entity.Route;
-import com.hiss.avalor_backend.entity.RouteWithCost;
+import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.CitiesService;
@@ -19,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.*;
 
 @Service
@@ -30,6 +29,7 @@ public class RouteServiceImpl implements RouteService {
     private final CarrierService carrierService;
     private final CacheService cacheService;
     private final CitiesService citiesService;
+    private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
 
     /**
      * Основной метод для расчета маршрутов между двумя городами.
@@ -47,13 +47,23 @@ public class RouteServiceImpl implements RouteService {
         log.info("Найдено {} маршрутов в базе данных.", allRoutes.size());
 
         // Парсинг времени с учётом формата
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-        LocalDate filterTime = LocalDate.parse(time, formatter);
+//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+//        LocalDate filterTime = LocalDate.parse(time, formatter);
 
-        // Фильтрация маршрутов по времени и типу оборудования.
+        LocalDate targetDate = parseDate(time);
+
+        // Фильтрация маршрутов по дате
         List<Route> filteredRoutes = allRoutes.stream()
-                .filter(route -> route.getValidTo().isAfter(filterTime) || route.getValidTo().isEqual(filterTime))
-                .filter(route -> route.getEqpt().equalsIgnoreCase(weight))
+                .filter(route -> {
+                    boolean dateMatches = isValidForEndDate(route.getValidTo(), targetDate);
+                    log.info("Маршрут ID={} прошел фильтрацию по конечной дате: {}", route.getId(), dateMatches);
+                    return dateMatches;
+                })
+                .filter(route -> {
+                    boolean equipmentMatches = route.getEqpt().trim().equalsIgnoreCase(weight.trim());
+                    log.info("Маршрут ID={} прошел фильтрацию по оборудованию: {} {} {}", route.getId(), equipmentMatches, route.getEqpt(), weight);
+                    return equipmentMatches;
+                })
                 .filter(route -> route.getCarrier().isActive())
                 .toList();
 
@@ -71,6 +81,40 @@ public class RouteServiceImpl implements RouteService {
         return sortRoutesByCost(results);
     }
 
+    private boolean isValidForEndDate(String validTo, LocalDate targetDate) {
+        try {
+            // Разбиваем диапазон на начало и конец
+            String[] dateRange = validTo.split("-");
+            if (dateRange.length != 2) {
+                log.warn("Неверный формат диапазона дат: {}", validTo);
+                return false;
+            }
+
+            // Берем только конечную дату
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            LocalDate endDate = LocalDate.parse(dateRange[1].trim(), formatter);
+            log.info("End date: {}", endDate);
+            log.info("Search: {}", !targetDate.isAfter(endDate));
+
+            // Проверяем, что целевая дата не позже конечной
+            return !targetDate.isAfter(endDate);
+
+        } catch (DateTimeParseException e) {
+            log.error("Ошибка парсинга конечной даты: validTo={}, targetDate={}, error={}", validTo, targetDate, e);
+            return false;
+        }
+    }
+
+    private LocalDate parseDate(String date) {
+        try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+            return LocalDate.parse(date.trim(), formatter);
+        } catch (DateTimeParseException e) {
+            log.error("Ошибка парсинга даты: date={}, error={}", date, e);
+            throw new IllegalArgumentException("Неверный формат даты. Ожидается 'dd.MM.yyyy'.");
+        }
+    }
+
     @Override
     public Optional<Route> findById(Long id) {
         return routeRepo.findById(id);
@@ -78,7 +122,7 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public Route getRouteById(Long id) {
-        return routeRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Route with ID " + " not found"));
+        return routeRepo.findById(id).orElseThrow(() -> new EntityNotFoundException("Route with ID " + id + " not found"));
     }
 
     @Override
@@ -87,6 +131,16 @@ public class RouteServiceImpl implements RouteService {
         Carrier carrier = carrierService.findById(routeSaveDto.getCarrierId())
                 .orElseThrow(
                         () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
+                );
+
+        StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity = storageAtThePortOfArrivalRepo.
+                findById(routeSaveDto.getStorageAtThePortOfArrivalEntity()).orElseThrow(
+                        () -> new EntityNotFoundException("Route port not found " + routeSaveDto.getStorageAtThePortOfArrivalEntity())
+                );
+
+        StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity = storageAtThePortOfArrivalRepo.
+                findById(routeSaveDto.getStorageAtTheRailwayOfArrivalEntity()).orElseThrow(
+                        () -> new EntityNotFoundException("Route railway not found " + routeSaveDto.getStorageAtTheRailwayOfArrivalEntity())
                 );
 
         Route route = Route.builder()
@@ -109,6 +163,9 @@ public class RouteServiceImpl implements RouteService {
                 .totalTotalTimeDays(routeSaveDto.getTotalTotalTimeDays())
                 .transitTimeByTrainDays(routeSaveDto.getTransitTimeByTrainDays())
                 .totalWithoutMovementDays(routeSaveDto.getTotalWithoutMovementDays())
+                .arrivalDate(routeSaveDto.getArrivalDate())
+                .storageAtTheRailwayOfArrivalEntity(storageAtTheRailwayOfArrivalEntity)
+                .storageAtThePortOfArrivalEntity(storageAtThePortOfArrivalEntity)
                 .build();
 
         routeRepo.save(route);

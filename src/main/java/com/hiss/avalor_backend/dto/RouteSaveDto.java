@@ -22,7 +22,7 @@ public class RouteSaveDto {
 //    private String carrierShortName; // Короткое название перевозчика
     private String eqpt;       // Тип оборудования
     private String containerTypeSize; // Тип и размер контейнера
-    private LocalDate validTo; // Дата действия
+    private String validTo; // Дата действия
     private String filo;       // Free In, Liner Out
     private String notes;      // Примечания
     private String comments;   // Комментарии
@@ -34,6 +34,11 @@ public class RouteSaveDto {
     private String totalWithoutMovementDays;
     private String totalTravelDays;
     private String totalTotalTimeDays;
+
+    private Long storageAtThePortOfArrivalEntity;
+    private Long storageAtTheRailwayOfArrivalEntity;
+
+    private String arrivalDate;
 
 
 }

@@ -19,8 +19,8 @@ public class RouteSegmentDto {
     Integer priceDollars;
     Integer containerRentalPrice;
     Integer containerRentalPriceDollars;
-    LocalDate validTo;
-    LocalDate arrivalDate;
+    String validTo;
+    String arrivalDate;
     String eqpt;
     int cost;
     String transportType;

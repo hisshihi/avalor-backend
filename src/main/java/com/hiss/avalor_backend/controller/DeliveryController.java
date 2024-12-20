@@ -11,6 +11,7 @@ import com.hiss.avalor_backend.entity.RouteWithCost;
 import com.hiss.avalor_backend.repo.ApplicationRepo;
 import com.hiss.avalor_backend.repo.RouteRepo;
 import com.hiss.avalor_backend.service.CacheService;
+import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -24,9 +25,11 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -45,6 +48,8 @@ public class DeliveryController {
     private final CacheService cacheService;
 
     private final ApplicationRepo applicationRepo;
+
+    private final RouteExcelParserService routeExcelParserService;
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping("/by-ids")
@@ -173,6 +178,19 @@ public class DeliveryController {
         return ResponseEntity.ok("Route and related applications have been deleted");
     }
 
+    // Сохранение маршрутов в формате xlsx
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PostMapping("/excel")
+    public ResponseEntity<?> uploadRouteExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            try (InputStream inputStream = file.getInputStream()) {
+                routeExcelParserService.saveRoutesFromExcel(inputStream);
+                return ResponseEntity.ok("Routes uploaded successfully");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing file: " + e.getMessage());
+        }
+    }
 
     private void clearCache() {
         cacheService.refreshCacheRoute();

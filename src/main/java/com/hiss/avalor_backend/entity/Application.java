@@ -55,7 +55,7 @@ public class Application {
     @Email
     private String emailOfTheSender;
 
-    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
+//    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
     private String phoneOfTheSender;
 
     private String fullNameOfTheSender;

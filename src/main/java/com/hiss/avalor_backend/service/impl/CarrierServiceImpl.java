@@ -19,4 +19,9 @@ public class CarrierServiceImpl implements CarrierService {
         return carrierRepo.findById(id);
     }
 
+    @Override
+    public Optional<Carrier> findByName(String carrierName) {
+        return carrierRepo.findByNameOptional(carrierName);
+    }
+
 }
