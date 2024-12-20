@@ -60,7 +60,7 @@ public class RouteServiceImpl implements RouteService {
                     return dateMatches;
                 })
                 .filter(route -> {
-                    boolean equipmentMatches = route.getEqpt().trim().equalsIgnoreCase(weight.trim());
+                    boolean equipmentMatches = route.getEqpt().equals(weight);
                     log.info("Маршрут ID={} прошел фильтрацию по оборудованию: {} {} {}", route.getId(), equipmentMatches, route.getEqpt(), weight);
                     return equipmentMatches;
                 })
