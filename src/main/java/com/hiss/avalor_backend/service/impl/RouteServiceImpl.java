@@ -55,7 +55,7 @@ public class RouteServiceImpl implements RouteService {
         // Фильтрация маршрутов по дате
         List<Route> filteredRoutes = allRoutes.stream()
                 .filter(route -> {
-                    boolean dateMatches = isValidForEndDate(route.getValidTo(), targetDate);
+                    boolean dateMatches = isValidForDateRange(route.getValidTo(), targetDate);
                     log.info("Маршрут ID={} прошел фильтрацию по конечной дате: {}", route.getId(), dateMatches);
                     return dateMatches;
                 })
@@ -73,7 +73,7 @@ public class RouteServiceImpl implements RouteService {
         List<List<RouteWithCost>> results = new ArrayList<>();
 
         // Поиск всех возможных маршрутов.
-        findRoutes(filteredRoutes, cityFrom, cityTo, results);
+        findRoutes(filteredRoutes, cityFrom, cityTo, targetDate, results);
 
         log.info("Найдено {} маршрутов из '{}' в '{}'.", results.size(), cityFrom, cityTo);
 
@@ -81,7 +81,7 @@ public class RouteServiceImpl implements RouteService {
         return sortRoutesByCost(results);
     }
 
-    private boolean isValidForEndDate(String validTo, LocalDate targetDate) {
+    private boolean isValidForDateRange(String validTo, LocalDate targetDate) {
         try {
             // Разбиваем диапазон на начало и конец
             String[] dateRange = validTo.split("-");
@@ -92,12 +92,16 @@ public class RouteServiceImpl implements RouteService {
 
             // Берем только конечную дату
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+
+            LocalDate startDate = LocalDate.parse(dateRange[0].trim(), formatter);
             LocalDate endDate = LocalDate.parse(dateRange[1].trim(), formatter);
+
+            log.info("Start date: {}", startDate);
             log.info("End date: {}", endDate);
-            log.info("Search: {}", !targetDate.isAfter(endDate));
+            log.info("Search: start date - {}, end date - {}", !targetDate.isBefore(startDate), !targetDate.isAfter(endDate));
 
             // Проверяем, что целевая дата не позже конечной
-            return !targetDate.isAfter(endDate);
+            return !targetDate.isBefore(startDate) && !targetDate.isAfter(endDate);
 
         } catch (DateTimeParseException e) {
             log.error("Ошибка парсинга конечной даты: validTo={}, targetDate={}, error={}", validTo, targetDate, e);
@@ -195,8 +199,6 @@ public class RouteServiceImpl implements RouteService {
         }
     }
 
-
-
     @Override
     @Transactional
     public List<Route> findMany(List<Long> ids) {
@@ -220,17 +222,17 @@ public class RouteServiceImpl implements RouteService {
     /**
      * Инициализация поиска маршрутов.
      */
-    private void findRoutes(List<Route> allRoutes, String cityFrom, String cityTo,
+    private void findRoutes(List<Route> allRoutes, String cityFrom, String cityTo, LocalDate targetDate,
                             List<List<RouteWithCost>> results) {
         log.info("Инициализация поиска маршрутов из '{}' в '{}'.", cityFrom, cityTo);
-        findRoutesRecursive(allRoutes, cityFrom, cityTo, new ArrayList<>(), new HashSet<>(), results);
+        findRoutesRecursive(allRoutes, cityFrom, cityTo, new ArrayList<>(), new HashSet<>(), results, targetDate);
     }
 
     /**
      * Рекурсивный метод для поиска всех возможных маршрутов.
      */
     private void findRoutesRecursive(List<Route> allRoutes, String currentCity, String destinationCity,
-                                     List<Route> currentPath, Set<Route> visited, List<List<RouteWithCost>> results) {
+                                     List<Route> currentPath, Set<Route> visited, List<List<RouteWithCost>> results, LocalDate targetDate) {
         log.info("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
 
         // Ограничение длины маршрута: не более 1 промежуточных пунктов.
@@ -247,6 +249,12 @@ public class RouteServiceImpl implements RouteService {
                 continue;
             }
 
+            // Дополнительная проверка даты для каждого сегмента состовного маршрута
+            if (!isValidForDateRange(route.getValidTo(), targetDate)) {
+                log.info("Пропуск маршрута из-за даты {}, {}", route.getCityFrom(), route.getCityTo());
+                continue;
+            }
+
             log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
             currentPath.add(route);
             visited.add(route);
@@ -257,7 +265,7 @@ public class RouteServiceImpl implements RouteService {
                 results.add(convertToRouteWithCosts(new ArrayList<>(currentPath)));
             } else {
                 // Продолжаем поиск рекурсивно.
-                findRoutesRecursive(allRoutes, route.getCityTo(), destinationCity, currentPath, visited, results);
+                findRoutesRecursive(allRoutes, route.getCityTo(), destinationCity, currentPath, visited, results, targetDate);
             }
 
             // Возврат к предыдущему состоянию (удаление последнего маршрута).

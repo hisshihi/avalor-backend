@@ -138,6 +138,7 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
             return null;
         }
 
+        // TODO: добавить отработку даты
         switch (cell.getCellType()) {
             case STRING:
                 return cell.getStringCellValue().trim(); // Если строка, возвращаем её значение
