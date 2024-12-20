@@ -138,25 +138,34 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
             return null;
         }
 
-        // TODO: добавить отработку даты
-        switch (cell.getCellType()) {
+        CellType cellType = cell.getCellType();
+
+        if (cellType == CellType.FORMULA) {
+            cellType = cell.getCachedFormulaResultType(); // Получаем тип результата формулы
+        }
+
+        switch (cellType) {
             case STRING:
-                return cell.getStringCellValue().trim(); // Если строка, возвращаем её значение
+                return cell.getStringCellValue().trim();
             case NUMERIC:
-                // Если число, преобразуем к строке
-                double numericValue = cell.getNumericCellValue();
-                if (numericValue == Math.floor(numericValue)) {
-                    return String.valueOf((long) numericValue); // Целое число
+                if (DateUtil.isCellDateFormatted(cell)) {  // Проверка на формат даты
+                    LocalDate date = cell.getLocalDateTimeCellValue().toLocalDate();
+                    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy"); // Ваш формат
+                    return date.format(formatter);
                 } else {
-                    return String.valueOf(numericValue); // Оставляем с плавающей запятой
+                    double numericValue = cell.getNumericCellValue();
+                    if (numericValue == Math.floor(numericValue)) {
+                        return String.valueOf((long) numericValue);
+                    } else {
+                        return String.valueOf(numericValue);
+                    }
                 }
             case BOOLEAN:
-                return String.valueOf(cell.getBooleanCellValue()); // Если булевое значение
+                return String.valueOf(cell.getBooleanCellValue());
             case FORMULA:
-                // Если формула, вычисляем её
-                return cell.getCellFormula();
+                return cell.getCellFormula(); // Или результат формулы, если нужно значение
             default:
-                return null; // Если тип ячейки неизвестен
+                return null;
         }
     }
 
