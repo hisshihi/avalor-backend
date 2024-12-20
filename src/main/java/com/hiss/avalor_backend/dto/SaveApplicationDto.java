@@ -36,10 +36,10 @@ public class SaveApplicationDto {
 
     private String nameOfTheSender; // Имя отправителя
 
-    @Email(message = "Invalid email format")
+//    @Email(message = "Invalid email format")
     private String emailOfTheSender; // Почта отправителя
 
-    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
+//    @Pattern(regexp = "\\d{10}", message = "Phone number must be 10 digits")
     private String phoneOfTheSender; // Номер телефона отправителя
 
     private String fullNameOfTheSender; // Полное имя Отправиетля
@@ -47,7 +47,7 @@ public class SaveApplicationDto {
     private String invoice; // Инвойс
     private String nameOfTheProduct; // Название товара
 
-    @Min(value = 1, message = "Quantity must be at least 1")
+//    @Min(value = 1, message = "Quantity must be at least 1")
     private Integer quantityOfTheProduct; // Кол-во товара
 
     private Integer volumeOfTheProduct; // Объём товара
@@ -56,7 +56,7 @@ public class SaveApplicationDto {
 
     private List<Long> additionalServiceIds; // ids доп услуг
 
-    @Min(value = 0, message = "Total cost must be non-negative")
+//    @Min(value = 0, message = "Total cost must be non-negative")
     private Integer allTotalCost; // Общая(конечная) стоимость
 
     private String cityFrom; // Город откуда
