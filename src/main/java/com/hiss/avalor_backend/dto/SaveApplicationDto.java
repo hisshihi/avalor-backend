@@ -54,7 +54,7 @@ public class SaveApplicationDto {
 
     private MultipartFile image2; // Изображение 2(товар)
 
-    private List<Long> additionalServiceIds; // ids доп услуг
+    private List<Long> additionalServiceIds = new ArrayList<>(); // ids доп услуг
 
 //    @Min(value = 0, message = "Total cost must be non-negative")
     private Integer allTotalCost; // Общая(конечная) стоимость
