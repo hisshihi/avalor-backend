@@ -4,11 +4,12 @@ import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.entity.Carrier;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.entity.StorageAtThePortOfArrivalEntity;
-import com.hiss.avalor_backend.repo.CarrierRepo;
 import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -16,14 +17,10 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
-import java.text.SimpleDateFormat;
 import java.time.LocalDate;
-import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +30,7 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
     private final CarrierService carrierService;
     private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepository;
     private final RouteService routeService;
+    private final CacheService cacheService;
 
     @Override
     public List<Route> parseRoutes(InputStream excelInputStream) throws Exception {
@@ -102,35 +100,15 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
                 routeService.create(routeSaveDto);
             }
 
+            clearCache();
+
         } catch (Exception e) {
             log.error("Failed to save routes: {}", e);
         }
     }
 
     private RouteSaveDto convertToDto(Route route) {
-        return RouteSaveDto.builder()
-                .cityFrom(route.getCityFrom())
-                .cityTo(route.getCityTo())
-                .transportType(route.getTransportType())
-                .polCountry(route.getPolCountry())
-                .pol(route.getPol())
-                .pod(route.getPod())
-                .eqpt(route.getEqpt())
-                .containerTypeSize(route.getContainerTypeSize())
-                .validTo(route.getValidTo())
-                .filo(route.getFilo())
-                .notes(route.getNotes())
-                .comments(route.getComments())
-                .arrivalDate(route.getArrivalDate())
-                .totalTravelDays(route.getTotalTravelDays())
-                .arrangementForRailwayDays(route.getArrangementForRailwayDays())
-                .totalTotalTimeDays(route.getTotalTotalTimeDays())
-                .transitTimeByTrainDays(route.getTransitTimeByTrainDays())
-                .totalWithoutMovementDays(route.getTotalWithoutMovementDays())
-                .carrierId(route.getCarrier().getId())
-                .storageAtThePortOfArrivalEntity(route.getStorageAtThePortOfArrivalEntity().getId())
-                .storageAtTheRailwayOfArrivalEntity(route.getStorageAtTheRailwayOfArrivalEntity().getId())
-                .build();
+        return RouteSaveDto.builder().cityFrom(route.getCityFrom()).cityTo(route.getCityTo()).transportType(route.getTransportType()).polCountry(route.getPolCountry()).pol(route.getPol()).pod(route.getPod()).eqpt(route.getEqpt()).containerTypeSize(route.getContainerTypeSize()).validTo(route.getValidTo()).filo(route.getFilo()).notes(route.getNotes()).comments(route.getComments()).arrivalDate(route.getArrivalDate()).totalTravelDays(route.getTotalTravelDays()).arrangementForRailwayDays(route.getArrangementForRailwayDays()).totalTotalTimeDays(route.getTotalTotalTimeDays()).transitTimeByTrainDays(route.getTransitTimeByTrainDays()).totalWithoutMovementDays(route.getTotalWithoutMovementDays()).carrier(route.getCarrier().getName()).storageAtThePortOfArrivalEntity(route.getStorageAtThePortOfArrivalEntity().getId()).storageAtTheRailwayOfArrivalEntity(route.getStorageAtTheRailwayOfArrivalEntity().getId()).build();
     }
 
     private String getCellValue(Cell cell) {
@@ -175,9 +153,7 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
                 return null;
             }
             long storagePortId = (long) Double.parseDouble(getCellValue(cell));
-            return storageAtThePortOfArrivalRepository
-                    .findById(storagePortId)
-                    .orElseThrow(() -> new RuntimeException("Storage at port not found: " + storagePortId));
+            return storageAtThePortOfArrivalRepository.findById(storagePortId).orElseThrow(() -> new RuntimeException("Storage at port not found: " + storagePortId));
         } catch (NumberFormatException e) {
             log.error("Invalid storage port ID format: {}", getCellValue(cell));
             throw e; // Или вернуть null, если требуется пропустить строку
@@ -190,28 +166,43 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
                 return null;
             }
             long storageRailwayId = (long) Double.parseDouble(getCellValue(cell));
-            return storageAtThePortOfArrivalRepository
-                    .findById(storageRailwayId)
-                    .orElseThrow(() -> new RuntimeException("Storage at railway not found: " + storageRailwayId));
+            return storageAtThePortOfArrivalRepository.findById(storageRailwayId).orElseThrow(() -> new RuntimeException("Storage at railway not found: " + storageRailwayId));
         } catch (NumberFormatException e) {
             log.error("Invalid storage railway ID format: {}", getCellValue(cell));
             throw e; // Или вернуть null, если требуется пропустить строку
         }
     }
 
+//    private Carrier findCarrier(Cell cell) {
+//        try {
+//            if (cell == null || getCellValue(cell).isEmpty()) {
+//                return null;
+//            }
+//            long carrierId = (long) Double.parseDouble(getCellValue(cell));
+//            return carrierService
+//                    .findById(carrierId)
+//                    .orElseThrow(() -> new RuntimeException("Carrier not found: " + carrierId));
+//        } catch (NumberFormatException e) {
+//            log.error("Invalid carrier ID format: {}", getCellValue(cell));
+//            throw e; // Или вернуть null, если требуется пропустить строку
+//        }
+//    }
+
     private Carrier findCarrier(Cell cell) {
         try {
             if (cell == null || getCellValue(cell).isEmpty()) {
                 return null;
             }
-            long carrierId = (long) Double.parseDouble(getCellValue(cell));
-            return carrierService
-                    .findById(carrierId)
-                    .orElseThrow(() -> new RuntimeException("Carrier not found: " + carrierId));
-        } catch (NumberFormatException e) {
-            log.error("Invalid carrier ID format: {}", getCellValue(cell));
-            throw e; // Или вернуть null, если требуется пропустить строку
+            String carrier = getCellValue(cell);
+            return carrierService.findByName(carrier).orElseThrow(() -> new EntityNotFoundException("Carrier not found: " + carrier));
+        } catch (Exception exception) {
+            log.error("Failed to find carrier by name: {}", getCellValue(cell));
+            throw exception;
         }
+    }
+
+    private void clearCache() {
+        cacheService.refreshCacheRoute();
     }
 
 }

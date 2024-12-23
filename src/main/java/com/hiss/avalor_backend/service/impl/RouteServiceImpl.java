@@ -132,9 +132,13 @@ public class RouteServiceImpl implements RouteService {
     @Override
     public void create(RouteSaveDto routeSaveDto) {
 
-        Carrier carrier = carrierService.findById(routeSaveDto.getCarrierId())
+//        Carrier carrier = carrierService.findById(routeSaveDto.getCarrierId())
+//                .orElseThrow(
+//                        () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
+//                );
+        Carrier carrier = carrierService.findByName(routeSaveDto.getCarrier())
                 .orElseThrow(
-                        () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
+                        () -> new EntityNotFoundException("Carrier with name " + routeSaveDto.getCarrier() + " not found")
                 );
 
         StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity = storageAtThePortOfArrivalRepo.
@@ -167,7 +171,7 @@ public class RouteServiceImpl implements RouteService {
                 .totalTotalTimeDays(routeSaveDto.getTotalTotalTimeDays())
                 .transitTimeByTrainDays(routeSaveDto.getTransitTimeByTrainDays())
                 .totalWithoutMovementDays(routeSaveDto.getTotalWithoutMovementDays())
-                .arrivalDate(routeSaveDto.getArrivalDate())
+                .arrivalDate(addArrivalDate(routeSaveDto.getValidTo()))
                 .storageAtTheRailwayOfArrivalEntity(storageAtTheRailwayOfArrivalEntity)
                 .storageAtThePortOfArrivalEntity(storageAtThePortOfArrivalEntity)
                 .build();
@@ -179,6 +183,12 @@ public class RouteServiceImpl implements RouteService {
         // Проверка и сохранение города
         saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
 
+    }
+
+    private String addArrivalDate(String validTo) {
+        String[] dateRange = validTo.split("-");
+        String endDate = dateRange[1];
+        return endDate;
     }
 
     private void saveUniqueCities(String cityFrom, String cityTo) {

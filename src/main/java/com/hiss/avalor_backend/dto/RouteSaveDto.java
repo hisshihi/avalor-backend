@@ -2,8 +2,6 @@ package com.hiss.avalor_backend.dto;
 
 import lombok.*;
 
-import java.time.LocalDate;
-
 @Getter
 @Setter
 @AllArgsConstructor
@@ -19,7 +17,7 @@ public class RouteSaveDto {
     private String pol;        // Порт погрузки
     private String pod;        // Порт разгрузки
 
-//    private String carrierShortName; // Короткое название перевозчика
+    //    private String carrierShortName; // Короткое название перевозчика
     private String eqpt;       // Тип оборудования
     private String containerTypeSize; // Тип и размер контейнера
     private String validTo; // Дата действия
@@ -27,7 +25,8 @@ public class RouteSaveDto {
     private String notes;      // Примечания
     private String comments;   // Комментарии
 
-    private Long carrierId;
+    //    private Long carrierId;
+    private String carrier;
 
     private String arrangementForRailwayDays;
     private String transitTimeByTrainDays;
