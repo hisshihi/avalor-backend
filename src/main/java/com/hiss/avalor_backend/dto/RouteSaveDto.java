@@ -21,7 +21,7 @@ public class RouteSaveDto {
     private String eqpt;       // Тип оборудования
     private String containerTypeSize; // Тип и размер контейнера
     private String validTo; // Дата действия
-    private String filo;       // Free In, Liner Out
+    private Integer filo;       // Наценка
     private String notes;      // Примечания
     private String comments;   // Комментарии
 

@@ -347,13 +347,9 @@ public class RouteServiceImpl implements RouteService {
             log.info("Добавлена стоимость аренды контейнера: {}.", rentCost);
         }
 
-        if ("Liner Out".equals(route.getFilo())) {
-            int handlingCost = getHandlingCost(route);
-            routeCost += handlingCost;
-            log.info("Добавлена стоимость обработки: {}.", handlingCost);
-        } else if (!"Free In".equals(route.getFilo())) {
-            log.warn("Неизвестный тип FILO: {}", route.getFilo());
-        }
+        int handlingCost = getHandlingCost(route);
+        routeCost += handlingCost;
+        log.info("Добавлена стоимость обработки: {}.", handlingCost);
 
         log.info("Итоговая стоимость сегмента {} -> {} = {}.", route.getCityFrom(), route.getCityTo(), routeCost);
         return routeCost;
@@ -373,7 +369,7 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости обработки груза.
      */
     private int getHandlingCost(Route route) {
-        int handlingCost = 0; // Константа для обработки.
+        int handlingCost = route.getFilo(); // Константа для обработки.
         log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;

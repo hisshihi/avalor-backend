@@ -58,7 +58,7 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
                 route.setEqpt(getCellValue(row.getCell(6)));
                 route.setContainerTypeSize(getCellValue(row.getCell(7)));
                 route.setValidTo(getCellValue(row.getCell(8)));
-                route.setFilo(getCellValue(row.getCell(9)));
+                route.setFilo(Integer.valueOf(getCellValue(row.getCell(9))));
                 route.setNotes(getCellValue(row.getCell(10)));
                 route.setComments(getCellValue(row.getCell(11)));
                 route.setArrivalDate(getCellValue(row.getCell(12)));
