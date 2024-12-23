@@ -52,20 +52,23 @@ public class RouteServiceImpl implements RouteService {
 
         LocalDate targetDate = parseDate(time);
 
+        // Обработка onlyThisCarrier
+        List<Route> filteredRoutes = filterRoutes(allRoutes, targetDate, weight);
+
         // Фильтрация маршрутов по дате
-        List<Route> filteredRoutes = allRoutes.stream()
-                .filter(route -> {
-                    boolean dateMatches = isValidForDateRange(route.getValidTo(), targetDate);
-                    log.info("Маршрут ID={} прошел фильтрацию по конечной дате: {}", route.getId(), dateMatches);
-                    return dateMatches;
-                })
-                .filter(route -> {
-                    boolean equipmentMatches = route.getEqpt().equals(weight);
-                    log.info("Маршрут ID={} прошел фильтрацию по оборудованию: {} {} {}", route.getId(), equipmentMatches, route.getEqpt(), weight);
-                    return equipmentMatches;
-                })
-                .filter(route -> route.getCarrier().isActive())
-                .toList();
+//        List<Route> filteredRoutes = allRoutes.stream()
+//                .filter(route -> {
+//                    boolean dateMatches = isValidForDateRange(route.getValidTo(), targetDate);
+//                    log.info("Маршрут ID={} прошел фильтрацию по конечной дате: {}", route.getId(), dateMatches);
+//                    return dateMatches;
+//                })
+//                .filter(route -> {
+//                    boolean equipmentMatches = route.getEqpt().equals(weight);
+//                    log.info("Маршрут ID={} прошел фильтрацию по оборудованию: {} {} {}", route.getId(), equipmentMatches, route.getEqpt(), weight);
+//                    return equipmentMatches;
+//                })
+//                .filter(route -> route.getCarrier().isActive())
+//                .toList();
 
         log.info("После фильтрации осталось {} маршрутов.", filteredRoutes.size());
 
@@ -79,6 +82,28 @@ public class RouteServiceImpl implements RouteService {
 
         // Сортировка маршрутов по стоимости.
         return sortRoutesByCost(results);
+    }
+
+    private List<Route> filterRoutes(List<Route> allRoutes, LocalDate targetDate, String weight) {
+        // 1. Проверяем, есть ли перевозчики с onlyThisCarrier = true
+        List<Carrier> exclusiveCarriers = carrierService.findAllByOnlyThisCarrierIsTrue();
+
+        if (!exclusiveCarriers.isEmpty()) {
+            // Если есть эксклюзивные перевозчики, фильтруем маршруты только по ним
+            return allRoutes.stream()
+                    .filter(route -> exclusiveCarriers.contains(route.getCarrier())) // Только маршруты эксклюзивных перевозчиков
+                    .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
+                    .filter(route -> route.getEqpt().equals(weight))
+                    .filter(route -> route.getCarrier().isActive())
+                    .toList();
+        } else {
+            // Если нет эксклюзивных перевозчиков, фильтруем как обычно
+            return allRoutes.stream()
+                    .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
+                    .filter(route -> route.getEqpt().equals(weight))
+                    .filter(route -> route.getCarrier().isActive())
+                    .toList();
+        }
     }
 
     private boolean isValidForDateRange(String validTo, LocalDate targetDate) {

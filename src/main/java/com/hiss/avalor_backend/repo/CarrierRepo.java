@@ -19,4 +19,5 @@ public interface CarrierRepo extends JpaRepository<Carrier, Long> {
     @Query("select c from Carrier c where c.active = true")
     List<Carrier> findAll();
 
+    List<Carrier> findAllByOnlyThisCarrierIsTrue();
 }

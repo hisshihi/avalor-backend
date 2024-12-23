@@ -5,14 +5,15 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.dto.RouteDto;
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
-import com.hiss.avalor_backend.entity.Application;
-import com.hiss.avalor_backend.entity.Route;
-import com.hiss.avalor_backend.entity.RouteWithCost;
+import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.ApplicationRepo;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
 import com.hiss.avalor_backend.service.CacheService;
+import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -52,6 +53,10 @@ public class DeliveryController {
     private final ApplicationRepo applicationRepo;
 
     private final RouteExcelParserService routeExcelParserService;
+
+    private final CarrierService carrierService;
+
+    private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping("/by-ids")
@@ -147,6 +152,31 @@ public class DeliveryController {
         Route route = routeRepo.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
 
+        // Обновляем перевозчика, если ID передан
+        if (patchNode.has("carrierId")) {
+            Long carrierId = patchNode.get("carrierId").asLong();
+            Carrier newCarrier = carrierService.findById(carrierId)
+                    .orElseThrow(() -> new EntityNotFoundException("Carrier not found"));
+            route.setCarrier(newCarrier);
+        }
+
+        // Обновляем storageAtThePortOfArrivalEntity, если ID передан
+        if (patchNode.has("storageAtThePortOfArrivalEntityId")) {
+            Long portStorageId = patchNode.get("storageAtThePortOfArrivalEntityId").asLong();
+            StorageAtThePortOfArrivalEntity newPortStorage = storageAtThePortOfArrivalRepo.findById(portStorageId)
+                    .orElseThrow(() -> new EntityNotFoundException("Port storage entity not found"));
+            route.setStorageAtThePortOfArrivalEntity(newPortStorage);
+        }
+
+        // Обновляем storageAtTheRailwayOfArrivalEntity, если ID передан
+        if (patchNode.has("storageAtTheRailwayOfArrivalEntityId")) {
+            Long railwayStorageId = patchNode.get("storageAtTheRailwayOfArrivalEntityId").asLong();
+            StorageAtThePortOfArrivalEntity newRailwayStorage = storageAtThePortOfArrivalRepo.findById(railwayStorageId)
+                    .orElseThrow(() -> new EntityNotFoundException("Railway storage entity not found"));
+            route.setStorageAtTheRailwayOfArrivalEntity(newRailwayStorage);
+        }
+
+        // Обновляем остальные поля
         objectMapper.readerForUpdating(route).readValue(patchNode);
 
         return routeRepo.save(route);

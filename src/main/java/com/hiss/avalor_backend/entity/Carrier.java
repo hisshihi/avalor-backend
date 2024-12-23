@@ -26,6 +26,7 @@ public class Carrier {
     private Integer containerRentalPriceDollars;
 
     private boolean active;
+    private boolean onlyThisCarrier = false;
 
     @Override
     public final boolean equals(Object o) {

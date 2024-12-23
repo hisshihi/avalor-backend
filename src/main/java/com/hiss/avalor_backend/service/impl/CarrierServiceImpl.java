@@ -6,6 +6,7 @@ import com.hiss.avalor_backend.service.CarrierService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -22,6 +23,11 @@ public class CarrierServiceImpl implements CarrierService {
     @Override
     public Optional<Carrier> findByName(String carrierName) {
         return carrierRepo.findByNameOptional(carrierName);
+    }
+
+    @Override
+    public List<Carrier> findAllByOnlyThisCarrierIsTrue() {
+        return carrierRepo.findAllByOnlyThisCarrierIsTrue();
     }
 
 }
