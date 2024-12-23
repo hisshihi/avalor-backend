@@ -16,6 +16,7 @@ import com.hiss.avalor_backend.service.RouteService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -30,6 +31,7 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -182,12 +184,16 @@ public class DeliveryController {
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping("/excel")
     public ResponseEntity<?> uploadRouteExcel(@RequestParam("file") MultipartFile file) {
-        try {
-            try (InputStream inputStream = file.getInputStream()) {
-                routeExcelParserService.saveRoutesFromExcel(inputStream);
+        try (InputStream inputStream = file.getInputStream();
+             XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) { // Create workbook here
+            List<String> errors = new ArrayList<>();
+            try {
+                routeExcelParserService.saveRoutesFromExcel(workbook, errors); // Pass workbook and errors
                 return ResponseEntity.ok("Routes uploaded successfully");
+            } catch (IllegalArgumentException e) {
+                return ResponseEntity.badRequest().body(e.getMessage());
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error processing file: " + e.getMessage());
         }
     }

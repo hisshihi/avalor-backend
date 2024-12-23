@@ -11,11 +11,13 @@ import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -33,78 +35,98 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
     private final CacheService cacheService;
 
     @Override
-    public List<Route> parseRoutes(InputStream excelInputStream) throws Exception {
+    public List<Route> parseRoutes(XSSFWorkbook workbook, List<String> errors) throws Exception {
         List<Route> routes = new ArrayList<>();
-        try (XSSFWorkbook workbook = new XSSFWorkbook(excelInputStream)) {
-            Sheet sheet = workbook.getSheetAt(0);
-            boolean isHeader = true;
 
-            for (Row row : sheet) {
-                if (isHeader) {
-                    isHeader = false;
+        Sheet sheet = workbook.getSheetAt(0);
+        boolean isHeader = true;
+
+        for (Row row : sheet) {
+            if (isHeader) {
+                isHeader = false;
+                continue;
+            }
+
+            try {
+                Route route = new Route();
+
+                // Преобразуем данные из ячеек
+                route.setCityFrom(getCellValue(row.getCell(0)));
+                route.setCityTo(getCellValue(row.getCell(1)));
+                route.setTransportType(getCellValue(row.getCell(2)));
+                route.setPolCountry(getCellValue(row.getCell(3)));
+                route.setPol(getCellValue(row.getCell(4)));
+                route.setPod(getCellValue(row.getCell(5)));
+                route.setEqpt(getCellValue(row.getCell(6)));
+                route.setContainerTypeSize(getCellValue(row.getCell(7)));
+                route.setValidTo(getCellValue(row.getCell(8)));
+                route.setFilo(getCellValue(row.getCell(9)));
+                route.setNotes(getCellValue(row.getCell(10)));
+                route.setComments(getCellValue(row.getCell(11)));
+                route.setArrivalDate(getCellValue(row.getCell(12)));
+                route.setArrangementForRailwayDays(getCellValue(row.getCell(13)));
+                route.setTransitTimeByTrainDays(getCellValue(row.getCell(14)));
+                route.setTotalWithoutMovementDays(getCellValue(row.getCell(15)));
+                route.setTotalTravelDays(getCellValue(row.getCell(16)));
+                route.setTotalTotalTimeDays(getCellValue(row.getCell(17)));
+
+                try {
+                    route.setStorageAtThePortOfArrivalEntity(findStorageAtPort(row.getCell(18)));
+                } catch (RuntimeException e) {
+                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
+                    continue; // Skip to the next row if an entity is not found
+                }
+
+                try {
+                    route.setStorageAtTheRailwayOfArrivalEntity(findStorageAtRailway(row.getCell(19)));
+                } catch (RuntimeException e) {
+                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
                     continue;
                 }
 
                 try {
-                    Route route = new Route();
-
-                    // Преобразуем данные из ячеек
-                    route.setCityFrom(getCellValue(row.getCell(0)));
-                    route.setCityTo(getCellValue(row.getCell(1)));
-                    route.setTransportType(getCellValue(row.getCell(2)));
-                    route.setPolCountry(getCellValue(row.getCell(3)));
-                    route.setPol(getCellValue(row.getCell(4)));
-                    route.setPod(getCellValue(row.getCell(5)));
-                    route.setEqpt(getCellValue(row.getCell(6)));
-                    route.setContainerTypeSize(getCellValue(row.getCell(7)));
-                    route.setValidTo(getCellValue(row.getCell(8)));
-                    route.setFilo(getCellValue(row.getCell(9)));
-                    route.setNotes(getCellValue(row.getCell(10)));
-                    route.setComments(getCellValue(row.getCell(11)));
-                    route.setArrivalDate(getCellValue(row.getCell(12)));
-                    route.setArrangementForRailwayDays(getCellValue(row.getCell(13)));
-                    route.setTransitTimeByTrainDays(getCellValue(row.getCell(14)));
-                    route.setTotalWithoutMovementDays(getCellValue(row.getCell(15)));
-                    route.setTotalTravelDays(getCellValue(row.getCell(16)));
-                    route.setTotalTotalTimeDays(getCellValue(row.getCell(17)));
-
-                    // Загрузка StorageAtThePortOfArrivalEntity
-                    route.setStorageAtThePortOfArrivalEntity(findStorageAtPort(row.getCell(18)));
-
-                    // Загрузка StorageAtTheRailwayOfArrivalEntity
-                    route.setStorageAtTheRailwayOfArrivalEntity(findStorageAtRailway(row.getCell(19)));
-
-                    // Загрузка Carrier
                     route.setCarrier(findCarrier(row.getCell(20)));
-
-                    routes.add(route);
-                    log.info("Parsed Route: {}", route);
-                } catch (Exception e) {
-                    log.error("Failed to parse row: {}", row.getRowNum(), e);
-                    // Можно пропустить строку или выбросить исключение в зависимости от ситуации
+                } catch (EntityNotFoundException e) {
+                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
+                    continue;
                 }
+
+                routes.add(route);
+                log.info("Parsed Route: {}", route);
+            } catch (Exception e) {
+                log.error("Failed to parse row: {}", row.getRowNum(), e);
+                // Можно пропустить строку или выбросить исключение в зависимости от ситуации
             }
         }
+
 
         log.info("Total routes parsed: {}", routes.size());
         return routes;
     }
 
     @Override
-    public void saveRoutesFromExcel(InputStream excelInputStream) {
-        try {
-            List<Route> routes = parseRoutes(excelInputStream);
+    @SneakyThrows
+    public void saveRoutesFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<Route> routes = parseRoutes(workbook, errors);
 
-            for (Route route : routes) {
+        for (int i = 0; i < routes.size(); i++) {
+            Route route = routes.get(i);
+            try {
                 RouteSaveDto routeSaveDto = convertToDto(route);
                 routeService.create(routeSaveDto);
+            } catch (Exception e) {
+                String errorMessage = String.format("Error saving route from row %d: %s", i + 2, e.getMessage()); // +2 because of header and 0-based indexing
+                errors.add(errorMessage);
+                log.error(errorMessage, e);
             }
-
-            clearCache();
-
-        } catch (Exception e) {
-            log.error("Failed to save routes: {}", e);
         }
+
+        clearCache();
+
+        if (!errors.isEmpty()) {
+            throw new IllegalArgumentException(String.join("\n", errors));
+        }
+
     }
 
     private RouteSaveDto convertToDto(Route route) {
