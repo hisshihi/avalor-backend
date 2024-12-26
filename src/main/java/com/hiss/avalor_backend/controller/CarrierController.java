@@ -6,6 +6,7 @@ import com.hiss.avalor_backend.entity.Carrier;
 import com.hiss.avalor_backend.entity.Route;
 import com.hiss.avalor_backend.repo.CarrierRepo;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -22,17 +23,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CarrierController {
 
-    private final CarrierService carrierService;
-
     private final CarrierRepo carrierRepo;
 
     private final ObjectMapper objectMapper;
 
-    private final RouteRepo routeRepo;
+    private final CacheService cacheService;
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping
     public Carrier create(@RequestBody Carrier carrier) {
+        clearCache();
         carrier.setActive(true);
         return carrierRepo.save(carrier);
     }
@@ -46,6 +46,7 @@ public class CarrierController {
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PatchMapping("/{id}")
     public Carrier patch(@PathVariable Long id, @RequestBody JsonNode patchNode) throws IOException {
+        clearCache();
         Carrier carrier = carrierRepo.findById(id).orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
 
@@ -57,10 +58,16 @@ public class CarrierController {
     @PreAuthorize("hasAuthority('SCOPE_DELETE')")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable Long id) {
+        clearCache();
         Carrier carrier = carrierRepo.findById(id).orElse(null);
         if (carrier != null && carrier.isActive()) { // Проверяем активность
             carrier.setActive(false); // Деактивируем перевозчика
             carrierRepo.save(carrier); // Сохраняем изменения
         }
     }
+
+    private void clearCache() {
+        cacheService.refreshCacheRoute();
+    }
+
 }

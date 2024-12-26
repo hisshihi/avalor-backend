@@ -59,6 +59,7 @@ public class ApplicationController {
         return ResponseEntity.ok(pagedModel);
     }
 
+    // TODO: Проверить, правильно ли работает обновление свзянных данных
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     public ResponseEntity<?> updateApplication(
