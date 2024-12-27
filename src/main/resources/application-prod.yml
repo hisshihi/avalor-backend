@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://postgres.railway.internal:5432/railway
+    url: jdbc:postgresql://autorack.proxy.rlwy.net:20682/railway
     username: postgres
     password: SfghFEfimyDKbCMeyMLAvsyScmGetLyK
     driver-class-name: org.postgresql.Driver
