@@ -52,42 +52,35 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
                 route.setCityFrom(getCellValue(row.getCell(0)));
                 route.setCityTo(getCellValue(row.getCell(1)));
                 route.setTransportType(getCellValue(row.getCell(2)));
-                route.setPolCountry(getCellValue(row.getCell(3)));
                 route.setPol(getCellValue(row.getCell(4)));
                 route.setPod(getCellValue(row.getCell(5)));
                 route.setEqpt(getCellValue(row.getCell(6)));
                 route.setContainerTypeSize(getCellValue(row.getCell(7)));
                 route.setValidTo(getCellValue(row.getCell(8)));
                 route.setFilo(Integer.valueOf(getCellValue(row.getCell(9))));
-                route.setNotes(getCellValue(row.getCell(10)));
-                route.setComments(getCellValue(row.getCell(11)));
-                route.setArrivalDate(getCellValue(row.getCell(12)));
-                route.setArrangementForRailwayDays(getCellValue(row.getCell(13)));
-                route.setTransitTimeByTrainDays(getCellValue(row.getCell(14)));
-                route.setTotalWithoutMovementDays(getCellValue(row.getCell(15)));
-                route.setTotalTravelDays(getCellValue(row.getCell(16)));
-                route.setTotalTotalTimeDays(getCellValue(row.getCell(17)));
 
-                try {
-                    route.setStorageAtThePortOfArrivalEntity(findStorageAtPort(row.getCell(18)));
-                } catch (RuntimeException e) {
-                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
-                    continue; // Skip to the next row if an entity is not found
-                }
+//                TODO: полностью переделать парсинг excel
 
-                try {
-                    route.setStorageAtTheRailwayOfArrivalEntity(findStorageAtRailway(row.getCell(19)));
-                } catch (RuntimeException e) {
-                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
-                    continue;
-                }
-
-                try {
-                    route.setCarrier(findCarrier(row.getCell(20)));
-                } catch (EntityNotFoundException e) {
-                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
-                    continue;
-                }
+//                try {
+//                    route.setStorageAtThePortOfArrivalEntity(findStorageAtPort(row.getCell(18)));
+//                } catch (RuntimeException e) {
+//                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
+//                    continue; // Skip to the next row if an entity is not found
+//                }
+//
+//                try {
+//                    route.setStorageAtTheRailwayOfArrivalEntity(findStorageAtRailway(row.getCell(19)));
+//                } catch (RuntimeException e) {
+//                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
+//                    continue;
+//                }
+//
+//                try {
+//                    route.setCarrier(findCarrier(row.getCell(20)));
+//                } catch (EntityNotFoundException e) {
+//                    errors.add(String.format("Error in row %d: %s", row.getRowNum() + 1, e.getMessage()));
+//                    continue;
+//                }
 
                 routes.add(route);
                 log.info("Parsed Route: {}", route);
@@ -128,7 +121,7 @@ public class RouteExcelParserServiceImpl implements RouteExcelParserService {
     }
 
     private RouteSaveDto convertToDto(Route route) {
-        return RouteSaveDto.builder().cityFrom(route.getCityFrom()).cityTo(route.getCityTo()).transportType(route.getTransportType()).polCountry(route.getPolCountry()).pol(route.getPol()).pod(route.getPod()).eqpt(route.getEqpt()).containerTypeSize(route.getContainerTypeSize()).validTo(route.getValidTo()).filo(route.getFilo()).notes(route.getNotes()).comments(route.getComments()).arrivalDate(route.getArrivalDate()).totalTravelDays(route.getTotalTravelDays()).arrangementForRailwayDays(route.getArrangementForRailwayDays()).totalTotalTimeDays(route.getTotalTotalTimeDays()).transitTimeByTrainDays(route.getTransitTimeByTrainDays()).totalWithoutMovementDays(route.getTotalWithoutMovementDays()).carrier(route.getCarrier().getName()).storageAtThePortOfArrivalEntity(route.getStorageAtThePortOfArrivalEntity().getId()).storageAtTheRailwayOfArrivalEntity(route.getStorageAtTheRailwayOfArrivalEntity().getId()).build();
+        return RouteSaveDto.builder().cityFrom(route.getCityFrom()).cityTo(route.getCityTo()).transportType(route.getTransportType()).pol(route.getPol()).pod(route.getPod()).eqpt(route.getEqpt()).containerTypeSize(route.getContainerTypeSize()).validTo(route.getValidTo()).filo(route.getFilo()).build();
     }
 
     private String getCellValue(Cell cell) {

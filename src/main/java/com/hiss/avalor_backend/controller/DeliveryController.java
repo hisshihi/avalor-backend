@@ -87,36 +87,25 @@ public class DeliveryController {
                         .map(r -> {
                             int price;
                             if ("COC".equals(r.getContainerTypeSize())) {
-                                price = r.getCarrier().getPrice() + r.getCarrier().getContainerRentalPrice();
+                                price = 0;
                             } else if ("SOC".equals(r.getContainerTypeSize())) {
-                                price = r.getCarrier().getPrice();
+                                price = 0;
                             } else {
                                 price = 0;
                             }
 
                             return new RouteSegmentDto(
-                                    r.getId(),
                                     r.getCityFrom(),
                                     r.getCityTo(),
-                                    r.getCarrier().getName(),
-                                    r.getCarrier().getPrice(),
-                                    r.getCarrier().getPriceDollars(),
-                                    r.getCarrier().getContainerRentalPrice(),
-                                    r.getCarrier().getContainerRentalPriceDollars(),
-                                    r.getValidTo(),
-                                    r.getArrivalDate(),
-                                    r.getEqpt(),
+                                    r.getCarrier(),
                                     price,
+                                    r.getValidTo(),
+                                    r.getEqpt(),
                                     r.getTransportType(),
                                     r.getContainerTypeSize(),
                                     r.getFilo(),
                                     r.getPol(),
-                                    r.getPod(),
-                                    r.getArrangementForRailwayDays(),
-                                    r.getTransitTimeByTrainDays(),
-                                    r.getTotalWithoutMovementDays(),
-                                    r.getTotalTravelDays(),
-                                    r.getTotalTotalTimeDays()
+                                    r.getPod()
                             );
 
                         })
@@ -125,90 +114,90 @@ public class DeliveryController {
         );
     }
 
-    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
-    @PostMapping("/calculate")
-    public ResponseEntity<?> saveRoute(@RequestBody RouteSaveDto routeSaveDto) {
-        clearCache();
-        routeService.create(routeSaveDto);
-        return new ResponseEntity<>(HttpStatus.CREATED);
-    }
+//    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+//    @PostMapping("/calculate")
+//    public ResponseEntity<?> saveRoute(@RequestBody RouteSaveDto routeSaveDto) {
+//        clearCache();
+//        routeService.create(routeSaveDto);
+//        return new ResponseEntity<>(HttpStatus.CREATED);
+//    }
+//
+//    // Вывод всех маршрутов для админа
+//    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+//    @GetMapping("/all")
+//    public ResponseEntity<?> getAll(Pageable pageable, PagedResourcesAssembler<Route> assembler) {
+//        Page<Route> routes = routeRepo.findAll(pageable);
+//
+//        PagedModel<EntityModel<Route>> pagedModel = assembler.toModel(routes);
+//
+//        return ResponseEntity.ok(pagedModel);
+//
+//    }
 
-    // Вывод всех маршрутов для админа
-    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
-    @GetMapping("/all")
-    public ResponseEntity<?> getAll(Pageable pageable, PagedResourcesAssembler<Route> assembler) {
-        Page<Route> routes = routeRepo.findAll(pageable);
-
-        PagedModel<EntityModel<Route>> pagedModel = assembler.toModel(routes);
-
-        return ResponseEntity.ok(pagedModel);
-
-    }
-
-    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
-    @PatchMapping("/{id}")
-    public Route patch(@PathVariable Long id, @RequestBody JsonNode patchNode) throws IOException {
-        clearCache();
-        Route route = routeRepo.findById(id).orElseThrow(() ->
-                new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
-
-        // Обновляем перевозчика, если ID передан
-        if (patchNode.has("carrierId")) {
-            Long carrierId = patchNode.get("carrierId").asLong();
-            Carrier newCarrier = carrierService.findById(carrierId)
-                    .orElseThrow(() -> new EntityNotFoundException("Carrier not found"));
-            route.setCarrier(newCarrier);
-        }
-
-        // Обновляем storageAtThePortOfArrivalEntity, если ID передан
-        if (patchNode.has("storageAtThePortOfArrivalEntityId")) {
-            Long portStorageId = patchNode.get("storageAtThePortOfArrivalEntityId").asLong();
-            StorageAtThePortOfArrivalEntity newPortStorage = storageAtThePortOfArrivalRepo.findById(portStorageId)
-                    .orElseThrow(() -> new EntityNotFoundException("Port storage entity not found"));
-            route.setStorageAtThePortOfArrivalEntity(newPortStorage);
-        }
-
-        // Обновляем storageAtTheRailwayOfArrivalEntity, если ID передан
-        if (patchNode.has("storageAtTheRailwayOfArrivalEntityId")) {
-            Long railwayStorageId = patchNode.get("storageAtTheRailwayOfArrivalEntityId").asLong();
-            StorageAtThePortOfArrivalEntity newRailwayStorage = storageAtThePortOfArrivalRepo.findById(railwayStorageId)
-                    .orElseThrow(() -> new EntityNotFoundException("Railway storage entity not found"));
-            route.setStorageAtTheRailwayOfArrivalEntity(newRailwayStorage);
-        }
-
-        // Обновляем остальные поля
-        objectMapper.readerForUpdating(route).readValue(patchNode);
-
-        return routeRepo.save(route);
-    }
-
-    @PreAuthorize("hasAuthority('SCOPE_DELETE')")
-    @DeleteMapping("/{id}")
-    @Transactional
-    public ResponseEntity<?> delete(@PathVariable Long id) {
-        clearCache();
-
-        // Найти маршрут
-        Route route = routeRepo.findById(id).orElse(null);
-        if (route == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body("Route not found");
-        }
-
-        // Найти заявки, связанные с маршрутом
-        List<Application> applications = applicationRepo.findByRoutesId(route.getId());
-
-        // Удалить связь маршрута с заявками
-        for (Application application : applications) {
-            application.getRoutes().remove(route);
-            applicationRepo.save(application); // Сохранить изменения
-        }
-
-        // Удалить маршрут
-        routeRepo.delete(route);
-
-        return ResponseEntity.ok("Route and related applications have been deleted");
-    }
+//    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+//    @PatchMapping("/{id}")
+//    public Route patch(@PathVariable Long id, @RequestBody JsonNode patchNode) throws IOException {
+//        clearCache();
+//        Route route = routeRepo.findById(id).orElseThrow(() ->
+//                new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));
+//
+//        // Обновляем перевозчика, если ID передан
+//        if (patchNode.has("carrierId")) {
+//            Long carrierId = patchNode.get("carrierId").asLong();
+//            Carrier newCarrier = carrierService.findById(carrierId)
+//                    .orElseThrow(() -> new EntityNotFoundException("Carrier not found"));
+//            route.setCarrier(newCarrier);
+//        }
+//
+//        // Обновляем storageAtThePortOfArrivalEntity, если ID передан
+//        if (patchNode.has("storageAtThePortOfArrivalEntityId")) {
+//            Long portStorageId = patchNode.get("storageAtThePortOfArrivalEntityId").asLong();
+//            StorageAtThePortOfArrivalEntity newPortStorage = storageAtThePortOfArrivalRepo.findById(portStorageId)
+//                    .orElseThrow(() -> new EntityNotFoundException("Port storage entity not found"));
+//            route.setStorageAtThePortOfArrivalEntity(newPortStorage);
+//        }
+//
+//        // Обновляем storageAtTheRailwayOfArrivalEntity, если ID передан
+//        if (patchNode.has("storageAtTheRailwayOfArrivalEntityId")) {
+//            Long railwayStorageId = patchNode.get("storageAtTheRailwayOfArrivalEntityId").asLong();
+//            StorageAtThePortOfArrivalEntity newRailwayStorage = storageAtThePortOfArrivalRepo.findById(railwayStorageId)
+//                    .orElseThrow(() -> new EntityNotFoundException("Railway storage entity not found"));
+//            route.setStorageAtTheRailwayOfArrivalEntity(newRailwayStorage);
+//        }
+//
+//        // Обновляем остальные поля
+//        objectMapper.readerForUpdating(route).readValue(patchNode);
+//
+//        return routeRepo.save(route);
+//    }
+//
+//    @PreAuthorize("hasAuthority('SCOPE_DELETE')")
+//    @DeleteMapping("/{id}")
+//    @Transactional
+//    public ResponseEntity<?> delete(@PathVariable Long id) {
+//        clearCache();
+//
+//        // Найти маршрут
+//        Route route = routeRepo.findById(id).orElse(null);
+//        if (route == null) {
+//            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+//                    .body("Route not found");
+//        }
+//
+//        // Найти заявки, связанные с маршрутом
+//        List<Application> applications = applicationRepo.findByRoutesId(route.getId());
+//
+//        // Удалить связь маршрута с заявками
+//        for (Application application : applications) {
+//            application.getRoutes().remove(route);
+//            applicationRepo.save(application); // Сохранить изменения
+//        }
+//
+//        // Удалить маршрут
+//        routeRepo.delete(route);
+//
+//        return ResponseEntity.ok("Route and related applications have been deleted");
+//    }
 
     // Сохранение маршрутов в формате xlsx
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")

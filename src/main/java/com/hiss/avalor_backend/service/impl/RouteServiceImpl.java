@@ -2,7 +2,9 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.entity.*;
+import com.hiss.avalor_backend.repo.RouteRailwayRepository;
 import com.hiss.avalor_backend.repo.RouteRepo;
+import com.hiss.avalor_backend.repo.RouteSeaRepository;
 import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
@@ -26,6 +28,8 @@ import java.util.*;
 public class RouteServiceImpl implements RouteService {
 
     private final RouteRepo routeRepo;
+    private final RouteRailwayRepository routeRailwayRepository;
+    private final RouteSeaRepository routeSeaRepository;
     private final CarrierService carrierService;
     private final CacheService cacheService;
     private final CitiesService citiesService;
@@ -43,8 +47,48 @@ public class RouteServiceImpl implements RouteService {
         log.info("Запуск расчета маршрутов из '{}' в '{}'.", cityFrom, cityTo);
 
         // Получение всех доступных маршрутов из базы данных.
-        List<Route> allRoutes = routeRepo.findAll();
+        List<Route> allRoutes = new ArrayList<>();
+
+        for (RouteRailway railway : routeRailwayRepository.findAll()) {
+            log.info("Рельсовый маршрут: " + railway);
+            allRoutes.add(new Route(
+                    railway.getCityFrom(),
+                    railway.getCityTo(),
+                    railway.getPol(),
+                    railway.getPod(),
+                    railway.getCarrier(),
+                    railway.getValidTo(),
+                    railway.getTransportType(),
+                    railway.getContainerTypeSize(),
+                    railway.getExclusive(),
+                    railway.getFilo20(),
+                    railway.getFilo20HC(),
+                    railway.getFilo40()
+            ));
+        }
+
+
+        for (RouteSea sea : routeSeaRepository.findAll()) {
+            log.info("Морской маршрут: " + sea);
+            allRoutes.add(new Route(
+                    sea.getCityFrom(),
+                    sea.getCityTo(),
+                    sea.getPol(),
+                    sea.getPod(),
+                    sea.getCarrier(),
+                    sea.getValidTo(),
+                    sea.getTransportType(),
+                    sea.getContainerTypeSize(),
+                    sea.getEqpt(),
+                    sea.getFilo(),
+                    sea.getExclusive()
+            ));
+        }
+
         log.info("Найдено {} маршрутов в базе данных.", allRoutes.size());
+        for (Route route : allRoutes) {
+            log.info("Маршрут - {}", route);
+        }
 
         // Парсинг времени с учётом формата
 //        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
@@ -85,25 +129,11 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private List<Route> filterRoutes(List<Route> allRoutes, LocalDate targetDate, String weight) {
-        // 1. Проверяем, есть ли перевозчики с onlyThisCarrier = true
-        List<Carrier> exclusiveCarriers = carrierService.findAllByOnlyThisCarrierIsTrue();
-
-        if (!exclusiveCarriers.isEmpty()) {
-            // Если есть эксклюзивные перевозчики, фильтруем маршруты только по ним
-            return allRoutes.stream()
-                    .filter(route -> exclusiveCarriers.contains(route.getCarrier())) // Только маршруты эксклюзивных перевозчиков
-                    .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
-                    .filter(route -> route.getEqpt().equals(weight))
-                    .filter(route -> route.getCarrier().isActive())
-                    .toList();
-        } else {
-            // Если нет эксклюзивных перевозчиков, фильтруем как обычно
-            return allRoutes.stream()
-                    .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
-                    .filter(route -> route.getEqpt().equals(weight))
-                    .filter(route -> route.getCarrier().isActive())
-                    .toList();
-        }
+        // Если нет эксклюзивных перевозчиков, фильтруем как обычно
+//        .filter(route -> route.getEqpt().equals(weight))
+        return allRoutes.stream()
+                .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
+                .toList();
     }
 
     private boolean isValidForDateRange(String validTo, LocalDate targetDate) {
@@ -161,52 +191,41 @@ public class RouteServiceImpl implements RouteService {
 //                .orElseThrow(
 //                        () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
 //                );
-        Carrier carrier = carrierService.findByName(routeSaveDto.getCarrier())
-                .orElseThrow(
-                        () -> new EntityNotFoundException("Carrier with name " + routeSaveDto.getCarrier() + " not found")
-                );
-
-        StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity = storageAtThePortOfArrivalRepo.
-                findById(routeSaveDto.getStorageAtThePortOfArrivalEntity()).orElseThrow(
-                        () -> new EntityNotFoundException("Route port not found " + routeSaveDto.getStorageAtThePortOfArrivalEntity())
-                );
-
-        StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity = storageAtThePortOfArrivalRepo.
-                findById(routeSaveDto.getStorageAtTheRailwayOfArrivalEntity()).orElseThrow(
-                        () -> new EntityNotFoundException("Route railway not found " + routeSaveDto.getStorageAtTheRailwayOfArrivalEntity())
-                );
-
-        Route route = Route.builder()
-                .cityFrom(routeSaveDto.getCityFrom())
-                .cityTo(routeSaveDto.getCityTo())
-                .transportType(routeSaveDto.getTransportType())
-                .polCountry(routeSaveDto.getPolCountry())
-                .carrier(carrier)
-                .pol(routeSaveDto.getPol())
-                .pod(routeSaveDto.getPod())
-                .eqpt(routeSaveDto.getEqpt())
-                .containerTypeSize(routeSaveDto.getContainerTypeSize())
-                .validTo(routeSaveDto.getValidTo())
-                .filo(routeSaveDto.getFilo())
-                .notes(routeSaveDto.getNotes())
-                .comments(routeSaveDto.getComments())
-                .carrierShortName(carrier.getName())
-                .totalTravelDays(routeSaveDto.getTotalTravelDays())
-                .arrangementForRailwayDays(routeSaveDto.getArrangementForRailwayDays())
-                .totalTotalTimeDays(routeSaveDto.getTotalTotalTimeDays())
-                .transitTimeByTrainDays(routeSaveDto.getTransitTimeByTrainDays())
-                .totalWithoutMovementDays(routeSaveDto.getTotalWithoutMovementDays())
-                .arrivalDate(addArrivalDate(routeSaveDto.getValidTo()))
-                .storageAtTheRailwayOfArrivalEntity(storageAtTheRailwayOfArrivalEntity)
-                .storageAtThePortOfArrivalEntity(storageAtThePortOfArrivalEntity)
-                .build();
-
-        routeRepo.save(route);
-
-        clearCache();
-
-        // Проверка и сохранение города
-        saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
+//        Carrier carrier = carrierService.findByName(routeSaveDto.getCarrier())
+//                .orElseThrow(
+//                        () -> new EntityNotFoundException("Carrier with name " + routeSaveDto.getCarrier() + " not found")
+//                );
+//
+//        StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity = storageAtThePortOfArrivalRepo.
+//                findById(routeSaveDto.getStorageAtThePortOfArrivalEntity()).orElseThrow(
+//                        () -> new EntityNotFoundException("Route port not found " + routeSaveDto.getStorageAtThePortOfArrivalEntity())
+//                );
+//
+//        StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity = storageAtThePortOfArrivalRepo.
+//                findById(routeSaveDto.getStorageAtTheRailwayOfArrivalEntity()).orElseThrow(
+//                        () -> new EntityNotFoundException("Route railway not found " + routeSaveDto.getStorageAtTheRailwayOfArrivalEntity())
+//                );
+//
+//        Route route = Route.builder()
+//                .cityFrom(routeSaveDto.getCityFrom())
+//                .cityTo(routeSaveDto.getCityTo())
+//                .transportType(routeSaveDto.getTransportType())
+//                .polCountry(routeSaveDto.getPolCountry())
+//                .carrier(carrier)
+//                .pol(routeSaveDto.getPol())
+//                .pod(routeSaveDto.getPod())
+//                .eqpt(routeSaveDto.getEqpt())
+//                .containerTypeSize(routeSaveDto.getContainerTypeSize())
+//                .validTo(routeSaveDto.getValidTo())
+//                .filo(routeSaveDto.getFilo())
+//                .build();
+//
+//        routeRepo.save(route);
+//
+//        clearCache();
+//
+//        // Проверка и сохранение города
+//        saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
 
     }
 
@@ -362,7 +381,8 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости сегмента маршрута.
      */
     private int calculateSegmentCost(Route route) {
-        int routeCost = route.getCarrier().getPrice();
+
+        int routeCost = 0;
         log.trace("Начальная стоимость маршрута: {} -> {} = {}.",
                 route.getCityFrom(), route.getCityTo(), routeCost);
 
@@ -384,7 +404,7 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости аренды контейнера.
      */
     private int getContainerRentCost(Route route) {
-        int rentCost = route.getCarrier().getContainerRentalPrice(); // Константа для аренды контейнера.
+        int rentCost = 0; // Константа для аренды контейнера.
         log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), rentCost);
         return rentCost;
@@ -394,7 +414,10 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости обработки груза.
      */
     private int getHandlingCost(Route route) {
-        int handlingCost = route.getFilo(); // Константа для обработки.
+        int handlingCost = 0;
+        if (route.getFilo() != null) {
+            handlingCost = route.getFilo(); // Константа для обработки.
+        }
         log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;

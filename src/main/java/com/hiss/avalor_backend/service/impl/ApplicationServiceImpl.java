@@ -108,7 +108,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost, Long applicationId) {
         List<Integer> priceForRoutes = new ArrayList<>();
         for (Route route : routes) {
-            priceForRoutes.add(route.getCarrier().getPrice());
+//            TODO: обовить вывод цены
+            priceForRoutes.add(0);
         }
         List<Long> idsAdditionalServices = new ArrayList<>();
         for (Long additionalService : additionalServices) {

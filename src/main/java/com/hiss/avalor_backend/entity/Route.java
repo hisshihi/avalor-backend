@@ -1,18 +1,19 @@
 package com.hiss.avalor_backend.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-import org.hibernate.proxy.HibernateProxy;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import lombok.ToString;
 
-import java.time.LocalDate;
-import java.util.Objects;
-
-@AllArgsConstructor
-@NoArgsConstructor
 @Getter
 @Setter
-@Builder
+@NoArgsConstructor
 @Entity
+@ToString
 public class Route {
 
     @Id
@@ -21,84 +22,49 @@ public class Route {
 
     private String cityFrom;
     private String cityTo;
+    private String pol; // Port of loading or point of loading
+    private String pod; // Port of discharge or point of discharge
+    private String carrier;
+    private String validTo;
     private String transportType;
-//    private int cost;
+    private String containerTypeSize;
 
-    private String polCountry; // Страна порта погрузки
-    private String pol;        // Порт погрузки
-    private String pod;        // Порт разгрузки
-    @Transient
-    private String carrierShortName; // Короткое название перевозчика
-    private String eqpt;       // Тип оборудования
-    private String containerTypeSize; // Тип и размер контейнера
-    private String validTo; // Дата действия
-    @Column(name = "filo")
-    private Integer filo;       // Наценка
-    private String notes;      // Примечания
-    private String comments;   // Комментарии
+    //    sea
+    private String eqpt;
+    private Integer filo;
+    private Integer exclusive;
 
-    private String arrivalDate;
+    //    railway
+    private Integer filo20;
+    private Integer filo20HC;
+    private Integer filo40;
 
-    private String arrangementForRailwayDays; // Постановка на жд, дней
-    private String transitTimeByTrainDays; // Транзитное время на жд, дней
-    private String totalWithoutMovementDays; // Итого без движения, дней
-    private String totalTravelDays; // Итого в пути, дней
-    private String totalTotalTimeDays; // Итого общее время, дней
-
-    @ManyToOne
-    @JoinColumn(name = "storage_at_the_port_of_arrival_entity_id")
-    private StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity;
-
-    @ManyToOne
-    @JoinColumn(name = "storage_at_the_railway_of_arrival_entity_id")
-    private StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity;
-
-    @ManyToOne
-    @JoinColumn(name = "carrier_id", nullable = false)
-    @ToString.Exclude
-    private Carrier carrier;
-
-    public String getCarrierShortName() {
-        return carrier != null ? carrier.getName() : null;
+    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, String eqpt, Integer filo, Integer exclusive) {
+        this.cityFrom = cityFrom;
+        this.cityTo = cityTo;
+        this.pol = pol;
+        this.pod = pod;
+        this.carrier = carrier;
+        this.validTo = validTo;
+        this.transportType = transportType;
+        this.containerTypeSize = containerTypeSize;
+        this.eqpt = eqpt;
+        this.filo = filo;
+        this.exclusive = exclusive;
     }
 
-    @Override
-    public final boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null) return false;
-        Class<?> oEffectiveClass = o instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : o.getClass();
-        Class<?> thisEffectiveClass = this instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : this.getClass();
-        if (thisEffectiveClass != oEffectiveClass) return false;
-        Route route = (Route) o;
-        return getId() != null && Objects.equals(getId(), route.getId());
-    }
-
-    @Override
-    public final int hashCode() {
-        return this instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
-    }
-
-    @Override
-    public String toString() {
-        return getClass().getSimpleName() + "(" +
-               "id = " + id + ", " +
-               "cityFrom = " + cityFrom + ", " +
-               "cityTo = " + cityTo + ", " +
-               "transportType = " + transportType + ", " +
-               "polCountry = " + polCountry + ", " +
-               "pol = " + pol + ", " +
-               "pod = " + pod + ", " +
-               "carrierShortName = " + carrierShortName + ", " +
-               "eqpt = " + eqpt + ", " +
-               "containerTypeSize = " + containerTypeSize + ", " +
-               "validTo = " + validTo + ", " +
-               "filo = " + filo + ", " +
-               "notes = " + notes + ", " +
-               "comments = " + comments + ", " +
-               "arrangementForRailwayDays = " + arrangementForRailwayDays + ", " +
-               "transitTimeByTrainDays = " + transitTimeByTrainDays + ", " +
-               "totalWithoutMovementDays = " + totalWithoutMovementDays + ", " +
-               "totalTravelDays = " + totalTravelDays + ", " +
-               "totalTotalTimeDays = " + totalTotalTimeDays + ")";
+    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, Integer exclusive, Integer filo20, Integer filo20HC, Integer filo40) {
+        this.cityFrom = cityFrom;
+        this.cityTo = cityTo;
+        this.pol = pol;
+        this.pod = pod;
+        this.carrier = carrier;
+        this.validTo = validTo;
+        this.transportType = transportType;
+        this.containerTypeSize = containerTypeSize;
+        this.exclusive = exclusive;
+        this.filo20 = filo20;
+        this.filo20HC = filo20HC;
+        this.filo40 = filo40;
     }
 }
