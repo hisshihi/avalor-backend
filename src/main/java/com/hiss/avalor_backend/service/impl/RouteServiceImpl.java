@@ -289,43 +289,50 @@ public class RouteServiceImpl implements RouteService {
                                      List<Route> currentPath, Set<Route> visited, List<List<RouteWithCost>> results, LocalDate targetDate) {
         log.info("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
 
-        // Ограничение длины маршрута: не более 1 промежуточных пунктов.
+        // Ограничение глубины рекурсии (максимальное количество пересадок)
         if (currentPath.size() > 1) {
             log.debug("Достигнуто максимальное количество промежуточных городов: {}", currentPath);
             return;
         }
 
         for (Route route : allRoutes) {
-            // Проверяем, подходит ли маршрут.
+            // Проверяем, подходит ли маршрут по городу отправления и не был ли он уже посещен
             if (!route.getCityFrom().equalsIgnoreCase(currentCity) || visited.contains(route)) {
-                log.trace("Пропуск маршрута из '{}' в '{}' (либо не подходит, либо уже посещен).",
-                        route.getCityFrom(), route.getCityTo());
+                log.trace("Пропуск маршрута из '{}' в '{}' (либо не подходит, либо уже посещен).", route.getCityFrom(), route.getCityTo());
                 continue;
             }
 
-            // Дополнительная проверка даты для каждого сегмента состовного маршрута
+            // Проверка даты маршрута
             if (!isValidForDateRange(route.getValidTo(), targetDate)) {
                 log.info("Пропуск маршрута из-за даты {}, {}", route.getCityFrom(), route.getCityTo());
                 continue;
             }
 
-            log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
-            currentPath.add(route);
-            visited.add(route);
+            // Проверка согласованности портов (POL/POD)
+            if (isValidPortSequence(currentPath, route)) {
+                log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
+                currentPath.add(route); // Добавляем текущий маршрут к пути
+                visited.add(route);      // Помечаем маршрут как посещенный
 
-            // Если маршрут достигает конечного города.
-            if (route.getCityTo().equalsIgnoreCase(destinationCity)) {
-                log.info("Найден маршрут до конечного города '{}'.", destinationCity);
-                results.add(convertToRouteWithCosts(new ArrayList<>(currentPath)));
+
+                if (route.getCityTo().equalsIgnoreCase(destinationCity)) {
+                    // Если достигли пункта назначения, добавляем найденный маршрут в результаты
+                    log.info("Найден маршрут до конечного города '{}'.", destinationCity);
+                    results.add(convertToRouteWithCosts(new ArrayList<>(currentPath))); // Создаем копию пути для добавления в результаты
+                } else {
+                    // Рекурсивный вызов для поиска следующего сегмента маршрута
+                    findRoutesRecursive(allRoutes, route.getCityTo(), destinationCity, currentPath, visited, results, targetDate);
+                }
+
+                // Удаляем текущий маршрут из пути и списка посещенных, чтобы вернуться к предыдущему состоянию и продолжить поиск других вариантов
+                currentPath.remove(currentPath.size() - 1);
+                visited.remove(route);
+                log.trace("Возврат к предыдущему маршруту: удален маршрут {} -> {}", route.getCityFrom(), route.getCityTo());
+
             } else {
-                // Продолжаем поиск рекурсивно.
-                findRoutesRecursive(allRoutes, route.getCityTo(), destinationCity, currentPath, visited, results, targetDate);
+                // Логируем несогласованность портов
+                log.warn("Маршрут {} -> {} не подходит по последовательности портов.", route.getCityFrom(), route.getCityTo());
             }
-
-            // Возврат к предыдущему состоянию (удаление последнего маршрута).
-            currentPath.remove(currentPath.size() - 1);
-            visited.remove(route);
-            log.trace("Возврат к предыдущему маршруту: удален маршрут {} -> {}", route.getCityFrom(), route.getCityTo());
         }
     }
 
@@ -334,24 +341,15 @@ public class RouteServiceImpl implements RouteService {
             return true; // Первый маршрут всегда валиден.
         }
 
-        Route lastRoute = currentPath.get(currentPath.size() - 1);
+        for (int i = 0; i < currentPath.size(); i++) {
+            Route currentRoute = currentPath.get(i);
+            Route subsequentRoute = (i < currentPath.size() - 1) ? currentPath.get(i + 1) : nextRoute;
 
-        // Проверяем, чтобы тип транспорта был согласован.
-        if ("Море".equals(nextRoute.getTransportType()) && !"Port".equals(lastRoute.getTransportType())) {
-            log.warn("Маршрут {} -> {} требует порта для перехода на корабль.", lastRoute.getCityTo(), nextRoute.getCityFrom());
-            return false;
+            if (!currentRoute.getPod().equals(subsequentRoute.getPol())) {
+                log.warn("Несогласованность портов: POD={} не совпадает с POL={}.", currentRoute.getPod(), subsequentRoute.getPol());
+                return false;
+            }
         }
-        if ("ЖД".equals(nextRoute.getTransportType()) && "Море".equals(lastRoute.getTransportType())) {
-            log.warn("Маршрут {} -> {} не может перейти с корабля на поезд.", lastRoute.getCityTo(), nextRoute.getCityFrom());
-            return false;
-        }
-
-        // Проверяем соответствие портов для морских маршрутов.
-        if ("Море".equals(nextRoute.getTransportType()) && !lastRoute.getPod().equals(nextRoute.getPol())) {
-            log.warn("Несогласованность портов: POD={} не совпадает с POL={}.", lastRoute.getPod(), nextRoute.getPol());
-            return false;
-        }
-
         return true;
     }
 
@@ -417,6 +415,13 @@ public class RouteServiceImpl implements RouteService {
         int handlingCost = 0;
         if (route.getFilo() != null) {
             handlingCost = route.getFilo(); // Константа для обработки.
+        }
+        if (route.getFilo20() != null) {
+            handlingCost += route.getFilo20();
+        } else if (route.getFilo20HC() != null) {
+            handlingCost += route.getFilo20HC();
+        } else if (route.getFilo40() != null) {
+            handlingCost += route.getFilo40();
         }
         log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
