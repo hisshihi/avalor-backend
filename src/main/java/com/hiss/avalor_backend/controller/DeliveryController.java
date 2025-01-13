@@ -76,8 +76,14 @@ public class DeliveryController {
         //Assuming only one RouteWithCost per List
         RouteWithCost route = routeWithCosts.get(0);
 
-        RentEntity rentEntity = getRentEntity(route.getRoute());
+//        RentEntity rentEntity = getRentEntity(route.getRoute());
         DropOffEntity dropOff = getDropOffEntity(route.getRoute());
+
+        if (dropOff == null) {
+            log.warn("Drop off not found: {}", route.getRoute());
+        } else {
+            log.info("Drop off: {}", dropOff);
+        }
 
         return new RouteDto(
                 route.getRoute().stream()
@@ -98,7 +104,7 @@ public class DeliveryController {
                         })
                         .collect(Collectors.toList()),
                 route.getTotalCost(),
-                rentEntity,
+                route.getRentEntity(),
                 dropOff
         );
     }
@@ -109,8 +115,7 @@ public class DeliveryController {
             if (route.getContainerTypeSize().equals("SOC")) {
                 String startPol = route.getPol();
                 String endPod = route.getPod();
-                // ... ваша логика для поиска RentEntity по startPol и endPod, используя rentRepository
-                return rentRepository.findByPolAndPod(startPol, endPod); // Пример (адаптируйте под вашу логику)
+                return rentRepository.findByPolAndPod(startPol, endPod);
             }
         }
         return null; // Возвращаем null, если RentEntity не применима
@@ -118,12 +123,17 @@ public class DeliveryController {
 
 
     private DropOffEntity getDropOffEntity(List<Route> routes) {
+        boolean hasSOC = routes.stream().anyMatch(route -> "SOC".equals(route.getContainerTypeSize()));
+        if (hasSOC) {
+            return null; // Если есть SOC, DropOff не нужен
+        }
+
         for (Route route : routes) {
-            if (route.getContainerTypeSize().equals("COC")) {
-                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()); // Пример (адаптируйте под вашу логику)
+            if ("COC".equals(route.getContainerTypeSize())) {
+                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()); // Используем dropOffRepository из контроллера!
             }
         }
-        return null; // Возвращаем null, если DropOffEntity не применима
+        return null; // Если подходящий DropOff не найден
     }
 
 //    @PreAuthorize("hasAuthority('SCOPE_WRITE')")

@@ -349,17 +349,120 @@ public class RouteServiceImpl implements RouteService {
         return true;
     }
 
-
     /**
      * Конвертация списка маршрутов в список маршрутов с указанием стоимости.
      */
     private List<RouteWithCost> convertToRouteWithCosts(List<Route> path) {
+        RentEntity rentEntity = null;
+        DropOffEntity dropOff = null;
+
+        boolean hasSOC = path.stream().anyMatch(route -> "SOC".equals(route.getContainerTypeSize()));
+        boolean hasCOC = path.stream().anyMatch(route -> "COC".equals(route.getContainerTypeSize())); //check for COC
+
+        if (hasSOC) {
+            rentEntity = findRentForRoute(path);
+        }
+//         else if (hasCOC) { // Only check for and apply dropOff if SOC is not present and COC is present.
+//            dropOff = getDropOffEntity(path); //  Перемещено в else, чтобы не искать dropOff, если есть SOC
+//        }
+
         // Расчет общей стоимости всего маршрута.
         int totalCost = path.stream().mapToInt(this::calculateSegmentCost).sum();
         log.debug("Расчет общей стоимости маршрута: {}.", totalCost);
 
         // Create a single RouteWithCost for the entire path.
-        return List.of(new RouteWithCost(path, totalCost));
+        return List.of(new RouteWithCost(path, totalCost, rentEntity, dropOff));
+    }
+
+    private RentEntity findRentForRoute(List<Route> path) {
+        String startCity = path.get(0).getCityFrom();
+        String endCity = path.get(path.size() - 1).getCityTo();
+
+
+        RentEntity rent = findRentForRouteByCity(startCity, endCity);
+        if (rent != null) {
+            return rent;  // Аренда для всего маршрута найдена
+        }
+
+
+        // Аренда для всего маршрута не найдена, ищем для отдельных сегментов SOC
+        for (Route route : path) {
+            if ("SOC".equals(route.getContainerTypeSize())) {
+                rent = rentRepository.findByPolAndPod(route.getPol(), route.getPod());
+                if (rent != null) {
+                    return rent; // Аренда для сегмента SOC найдена
+                }
+            }
+        }
+        return null; // Аренда не найдена
+    }
+
+    // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
+    private RentEntity findRentForRouteByCity(String startCity, String endCity) {
+        RentEntity rent = rentRepository.findByPolAndPod(startCity, endCity);
+        if (rent != null) return rent;
+
+
+        String startPol = determinePolForCity(startCity);
+        String endPod = determinePodForCity(endCity);
+
+        if (startPol != null && endPod != null) {
+            rent = rentRepository.findByPolAndPod(startPol, endPod);
+            if (rent != null) return rent;
+        }
+
+
+        return null;
+
+    }
+
+    // getDropOffEntity в сервисе (тоже исправляем для согласованности):
+    private DropOffEntity getDropOffEntity(List<Route> routes) {
+        for (Route route : routes) {
+            if ("COC".equals(route.getContainerTypeSize()) && route.getTransportType().equals("Море")) {
+                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod());
+            }
+        }
+        return null;
+    }
+
+    private String determinePolForCity(String city) {
+        // 1. Попробуем найти прямой маршрут, начинающийся в этом городе:
+        RouteSea route = routeSeaRepository.findByCityFrom(city); //  Нужен репозиторий для Route
+        if (route != null) {
+            return route.getPol(); //  Если нашли маршрут, возвращаем его POL
+        }
+
+
+        // 2. Если прямой маршрут не найден, попробуем найти по частичному совпадению в названии города
+        List<RouteSea> routes = routeSeaRepository.findAllByCityFromContainingIgnoreCase(city);
+        if (!routes.isEmpty()) {
+            return routes.get(0).getPol(); //  Возвращаем POL первого найденного маршрута
+        }
+
+
+
+        // 3. Если ничего не найдено, можно попробовать другие варианты (например, поиск по таблице городов/портов)
+
+        return null; // Если POL не найден
+    }
+
+    private String determinePodForCity(String city) {
+        // Аналогичная логика для POD (с использованием cityTo и pod)
+
+        RouteSea route = routeSeaRepository.findByCityTo(city); //  Нужен репозиторий для Route
+        if (route != null) {
+            return route.getPod();
+        }
+
+        List<RouteSea> routes = routeSeaRepository.findAllByCityToContainingIgnoreCase(city);
+        if (!routes.isEmpty()) {
+            return routes.get(0).getPod();
+        }
+
+
+        return null;  //  Если POD не найден
+
     }
 
     /**
@@ -412,6 +515,9 @@ public class RouteServiceImpl implements RouteService {
         return 0;
     }
 
+    /*
+    * Расчёт стоимости drop off
+    * */
     private int getContainerDropOffCost(Route route) {
         if (dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()) != null) {
             DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPod(route.getPol(), route.getPod());
