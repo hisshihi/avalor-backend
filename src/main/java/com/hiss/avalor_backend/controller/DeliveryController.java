@@ -6,9 +6,7 @@ import com.hiss.avalor_backend.dto.RouteDto;
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.*;
-import com.hiss.avalor_backend.repo.ApplicationRepo;
-import com.hiss.avalor_backend.repo.RouteRepo;
-import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
+import com.hiss.avalor_backend.repo.*;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteExcelParserService;
@@ -43,20 +41,15 @@ import java.util.stream.Collectors;
 public class DeliveryController {
 
     private final ObjectMapper objectMapper;
-
     private final RouteRepo routeRepo;
-
     private final RouteService routeService;
-
     private final CacheService cacheService;
-
     private final ApplicationRepo applicationRepo;
-
     private final RouteExcelParserService routeExcelParserService;
-
     private final CarrierService carrierService;
-
     private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
+    private final DropOffRepository dropOffRepository;
+    private final RentRepository rentRepository;
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping("/by-ids")
@@ -82,23 +75,17 @@ public class DeliveryController {
     private RouteDto convertToRouteDTO(List<RouteWithCost> routeWithCosts) {
         //Assuming only one RouteWithCost per List
         RouteWithCost route = routeWithCosts.get(0);
+
+        RentEntity rentEntity = getRentEntity(route.getRoute());
+        DropOffEntity dropOff = getDropOffEntity(route.getRoute());
+
         return new RouteDto(
                 route.getRoute().stream()
                         .map(r -> {
-                            int price;
-                            if ("COC".equals(r.getContainerTypeSize())) {
-                                price = 0;
-                            } else if ("SOC".equals(r.getContainerTypeSize())) {
-                                price = 0;
-                            } else {
-                                price = 0;
-                            }
-
                             return new RouteSegmentDto(
                                     r.getCityFrom(),
                                     r.getCityTo(),
                                     r.getCarrier(),
-                                    price,
                                     r.getValidTo(),
                                     r.getEqpt(),
                                     r.getTransportType(),
@@ -110,8 +97,33 @@ public class DeliveryController {
 
                         })
                         .collect(Collectors.toList()),
-                route.getTotalCost()
+                route.getTotalCost(),
+                rentEntity,
+                dropOff
         );
+    }
+
+    //  Вспомогательные методы для получения RentEntity и DropOffEntity (в контроллере)
+    private RentEntity getRentEntity(List<Route> routes) {
+        for (Route route : routes) {
+            if (route.getContainerTypeSize().equals("SOC")) {
+                String startPol = route.getPol();
+                String endPod = route.getPod();
+                // ... ваша логика для поиска RentEntity по startPol и endPod, используя rentRepository
+                return rentRepository.findByPolAndPod(startPol, endPod); // Пример (адаптируйте под вашу логику)
+            }
+        }
+        return null; // Возвращаем null, если RentEntity не применима
+    }
+
+
+    private DropOffEntity getDropOffEntity(List<Route> routes) {
+        for (Route route : routes) {
+            if (route.getContainerTypeSize().equals("COC")) {
+                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()); // Пример (адаптируйте под вашу логику)
+            }
+        }
+        return null; // Возвращаем null, если DropOffEntity не применима
     }
 
 //    @PreAuthorize("hasAuthority('SCOPE_WRITE')")

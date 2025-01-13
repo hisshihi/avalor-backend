@@ -2,12 +2,8 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.entity.*;
-import com.hiss.avalor_backend.repo.RouteRailwayRepository;
-import com.hiss.avalor_backend.repo.RouteRepo;
-import com.hiss.avalor_backend.repo.RouteSeaRepository;
-import com.hiss.avalor_backend.repo.StorageAtThePortOfArrivalRepo;
+import com.hiss.avalor_backend.repo.*;
 import com.hiss.avalor_backend.service.CacheService;
-import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.CitiesService;
 import com.hiss.avalor_backend.service.RouteService;
 import jakarta.persistence.EntityNotFoundException;
@@ -30,10 +26,10 @@ public class RouteServiceImpl implements RouteService {
     private final RouteRepo routeRepo;
     private final RouteRailwayRepository routeRailwayRepository;
     private final RouteSeaRepository routeSeaRepository;
-    private final CarrierService carrierService;
     private final CacheService cacheService;
     private final CitiesService citiesService;
-    private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
+    private final DropOffRepository dropOffRepository;
+    private final RentRepository rentRepository;
 
     /**
      * Основной метод для расчета маршрутов между двумя городами.
@@ -384,10 +380,15 @@ public class RouteServiceImpl implements RouteService {
         log.trace("Начальная стоимость маршрута: {} -> {} = {}.",
                 route.getCityFrom(), route.getCityTo(), routeCost);
 
-        if ("COC".equals(route.getContainerTypeSize())) {
+        if ("SOC".equals(route.getContainerTypeSize())) {
             int rentCost = getContainerRentCost(route);
             routeCost += rentCost;
             log.info("Добавлена стоимость аренды контейнера: {}.", rentCost);
+        }
+        if ("COC".equals(route.getContainerTypeSize())) {
+            int dropOffCost = getContainerDropOffCost(route);
+            routeCost += dropOffCost;
+            log.info("Добавлена стоимость drop off: {}", dropOffCost);
         }
 
         int handlingCost = getHandlingCost(route);
@@ -402,10 +403,23 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости аренды контейнера.
      */
     private int getContainerRentCost(Route route) {
-        int rentCost = 0; // Константа для аренды контейнера.
-        log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
-                route.getCityFrom(), route.getCityTo(), rentCost);
-        return rentCost;
+        if (rentRepository.findByPolAndPod(route.getPol(), route.getPod()) != null) {
+            RentEntity rentCost = rentRepository.findByPolAndPod(route.getPol(), route.getPod()); // Константа для аренды контейнера.
+            log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
+                    route.getPol(), route.getPod(), rentCost.getFilo());
+            return rentCost.getFilo();
+        }
+        return 0;
+    }
+
+    private int getContainerDropOffCost(Route route) {
+        if (dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()) != null) {
+            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPod(route.getPol(), route.getPod());
+            log.info("Стоимость drop off для маршрута {} -> {}: {}",
+                    route.getPol(), route.getPod(), dropOffEntityCost.getFilo());
+            return dropOffEntityCost.getFilo();
+        }
+        return 0;
     }
 
     /**
@@ -414,19 +428,34 @@ public class RouteServiceImpl implements RouteService {
     private int getHandlingCost(Route route) {
         int handlingCost = 0;
         if (route.getFilo() != null) {
-            handlingCost = route.getFilo(); // Константа для обработки.
+            handlingCost = route.getFilo();
         }
-        if (route.getFilo20() != null) {
+        if (route.getFilo20() != null && !route.getFilo20().equals(0)) {
             handlingCost += route.getFilo20();
-        } else if (route.getFilo20HC() != null) {
+            if (route.getTransportType().equals("ЖД") && !route.getFilo20().equals(0)) {
+                route.setEqpt("20");
+                route.setFilo(route.getFilo20());
+            }
+        } else if (route.getFilo20HC() != null && !route.getFilo20HC().equals(0)) {
             handlingCost += route.getFilo20HC();
-        } else if (route.getFilo40() != null) {
+            if (route.getTransportType().equals("ЖД") && !route.getFilo20HC().equals(0)) {
+                route.setEqpt("20t");
+                route.setFilo(route.getFilo20HC());
+            }
+        } else if (route.getFilo40() != null && !route.getFilo40().equals(0)) {
             handlingCost += route.getFilo40();
+            if (route.getTransportType().equals("ЖД") && !route.getFilo40().equals(0)) {
+                route.setEqpt("40");
+                route.setFilo(route.getFilo40());
+            }
         }
         log.info("Стоимость обработки для маршрута {} -> {}: {}.",
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;
     }
+
+
+
 }
 
 

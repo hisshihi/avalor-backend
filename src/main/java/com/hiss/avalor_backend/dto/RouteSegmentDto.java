@@ -13,7 +13,6 @@ public class RouteSegmentDto {
     String cityFrom;
     String cityTo;
     String carrier;
-    Integer price;
     String validTo;
     String eqpt;
 //    int cost;
