@@ -79,6 +79,7 @@ public class DeliveryController {
                 route.getRoute().stream()
                         .map(r -> {
                             return new RouteSegmentDto(
+                                    r.getId(),
                                     r.getCityFrom(),
                                     r.getCityTo(),
                                     r.getCarrier(),

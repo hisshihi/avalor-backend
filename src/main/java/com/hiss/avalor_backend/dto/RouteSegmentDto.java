@@ -9,7 +9,7 @@ import lombok.Setter;
 @AllArgsConstructor
 public class RouteSegmentDto {
 
-//    Long id;
+    Long id;
     String cityFrom;
     String cityTo;
     String carrier;

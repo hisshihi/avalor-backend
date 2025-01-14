@@ -105,29 +105,10 @@ public class RouteServiceImpl implements RouteService {
             log.info("Маршрут - {}", route);
         }
 
-        // Парсинг времени с учётом формата
-//        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd");
-//        LocalDate filterTime = LocalDate.parse(time, formatter);
-
         LocalDate targetDate = parseDate(time);
 
         // Обработка onlyThisCarrier
         List<Route> filteredRoutes = filterRoutes(allRoutes, targetDate, weight);
-
-        // Фильтрация маршрутов по дате
-//        List<Route> filteredRoutes = allRoutes.stream()
-//                .filter(route -> {
-//                    boolean dateMatches = isValidForDateRange(route.getValidTo(), targetDate);
-//                    log.info("Маршрут ID={} прошел фильтрацию по конечной дате: {}", route.getId(), dateMatches);
-//                    return dateMatches;
-//                })
-//                .filter(route -> {
-//                    boolean equipmentMatches = route.getEqpt().equals(weight);
-//                    log.info("Маршрут ID={} прошел фильтрацию по оборудованию: {} {} {}", route.getId(), equipmentMatches, route.getEqpt(), weight);
-//                    return equipmentMatches;
-//                })
-//                .filter(route -> route.getCarrier().isActive())
-//                .toList();
 
         log.info("После фильтрации осталось {} маршрутов.", filteredRoutes.size());
 
@@ -139,13 +120,41 @@ public class RouteServiceImpl implements RouteService {
 
         log.info("Найдено {} маршрутов из '{}' в '{}'.", results.size(), cityFrom, cityTo);
 
+        for (List<RouteWithCost> allRoutest : results) {
+            for (RouteWithCost routeWithCosts : allRoutest) {
+                for (Route route : routeWithCosts.getRoute()) {
+                    RouteSaveDto routeSaveDto = new RouteSaveDto();
+                    routeSaveDto.setCityFrom(route.getCityFrom());
+                    routeSaveDto.setCityTo(route.getCityTo());
+                    routeSaveDto.setPol(route.getPol());
+                    routeSaveDto.setPod(route.getPod());
+                    routeSaveDto.setEqpt(route.getEqpt());
+                    routeSaveDto.setCarrier(route.getCarrier());
+                    routeSaveDto.setValidTo(route.getValidTo());
+                    routeSaveDto.setTransportType(route.getTransportType());
+                    routeSaveDto.setContainerTypeSize(route.getContainerTypeSize());
+                    routeSaveDto.setExclusive(route.getExclusive());
+                    if (route.getTransportType().equals("Море")) {
+                        routeSaveDto.setFilo(route.getFilo());
+                    }
+                    if (route.getTransportType().equals("ЖД") || route.getTransportType().equals("Авто")) {
+                        routeSaveDto.setFilo20(route.getFilo20());
+                        routeSaveDto.setFilo20HC(route.getFilo20HC());
+                        routeSaveDto.setFilo40(route.getFilo40());
+                    }
+
+                    if (!routeRepo.existsByPolAndPodAndEqpt(route.getPol(), route.getPod(), route.getEqpt())) {
+                        create(routeSaveDto);
+                    }
+                }
+            }
+        }
+
         // Сортировка маршрутов по стоимости.
         return sortRoutesByCost(results);
     }
 
     private List<Route> filterRoutes(List<Route> allRoutes, LocalDate targetDate, String weight) {
-        // Если нет эксклюзивных перевозчиков, фильтруем как обычно
-//        .filter(route -> route.getEqpt().equals(weight))
         return allRoutes.stream()
                 .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
                 .filter(route -> isValidForWeight(route, weight))
@@ -226,46 +235,29 @@ public class RouteServiceImpl implements RouteService {
 
     @Override
     public void create(RouteSaveDto routeSaveDto) {
+        Route route = Route.builder()
+                .cityFrom(routeSaveDto.getCityFrom())
+                .cityTo(routeSaveDto.getCityTo())
+                .validTo(routeSaveDto.getValidTo())
+                .transportType(routeSaveDto.getTransportType())
+                .carrier(routeSaveDto.getCarrier())
+                .filo(routeSaveDto.getFilo())
+                .containerTypeSize(routeSaveDto.getContainerTypeSize())
+                .exclusive(routeSaveDto.getExclusive())
+                .filo20(routeSaveDto.getFilo20())
+                .filo20HC(routeSaveDto.getFilo20HC())
+                .filo40(routeSaveDto.getFilo40())
+                .pod(routeSaveDto.getPod())
+                .pol(routeSaveDto.getPol())
+                .eqpt(routeSaveDto.getEqpt())
+                .build();
 
-//        Carrier carrier = carrierService.findById(routeSaveDto.getCarrierId())
-//                .orElseThrow(
-//                        () -> new EntityNotFoundException("Carrier with ID " + routeSaveDto.getCarrierId() + " not found")
-//                );
-//        Carrier carrier = carrierService.findByName(routeSaveDto.getCarrier())
-//                .orElseThrow(
-//                        () -> new EntityNotFoundException("Carrier with name " + routeSaveDto.getCarrier() + " not found")
-//                );
-//
-//        StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity = storageAtThePortOfArrivalRepo.
-//                findById(routeSaveDto.getStorageAtThePortOfArrivalEntity()).orElseThrow(
-//                        () -> new EntityNotFoundException("Route port not found " + routeSaveDto.getStorageAtThePortOfArrivalEntity())
-//                );
-//
-//        StorageAtThePortOfArrivalEntity storageAtTheRailwayOfArrivalEntity = storageAtThePortOfArrivalRepo.
-//                findById(routeSaveDto.getStorageAtTheRailwayOfArrivalEntity()).orElseThrow(
-//                        () -> new EntityNotFoundException("Route railway not found " + routeSaveDto.getStorageAtTheRailwayOfArrivalEntity())
-//                );
-//
-//        Route route = Route.builder()
-//                .cityFrom(routeSaveDto.getCityFrom())
-//                .cityTo(routeSaveDto.getCityTo())
-//                .transportType(routeSaveDto.getTransportType())
-//                .polCountry(routeSaveDto.getPolCountry())
-//                .carrier(carrier)
-//                .pol(routeSaveDto.getPol())
-//                .pod(routeSaveDto.getPod())
-//                .eqpt(routeSaveDto.getEqpt())
-//                .containerTypeSize(routeSaveDto.getContainerTypeSize())
-//                .validTo(routeSaveDto.getValidTo())
-//                .filo(routeSaveDto.getFilo())
-//                .build();
-//
-//        routeRepo.save(route);
-//
-//        clearCache();
-//
-//        // Проверка и сохранение города
-//        saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
+        routeRepo.save(route);
+
+        clearCache();
+
+        // Проверка и сохранение города
+        saveUniqueCities(routeSaveDto.getCityFrom(), routeSaveDto.getCityTo());
 
     }
 

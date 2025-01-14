@@ -2,11 +2,13 @@ package com.hiss.avalor_backend.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 import java.util.List;
 
 @Getter
 @Setter
+@ToString
 public class RouteWithCost {
 
     private List<Route> route;

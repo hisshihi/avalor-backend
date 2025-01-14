@@ -11,33 +11,21 @@ public class RouteSaveDto {
 
     private String cityFrom;
     private String cityTo;
-    private String transportType;
-
-    private String polCountry; // Страна порта погрузки
-    private String pol;        // Порт погрузки
-    private String pod;        // Порт разгрузки
-
-    //    private String carrierShortName; // Короткое название перевозчика
-    private String eqpt;       // Тип оборудования
-    private String containerTypeSize; // Тип и размер контейнера
-    private String validTo; // Дата действия
-    private Integer filo;       // Наценка
-    private String notes;      // Примечания
-    private String comments;   // Комментарии
-
-    //    private Long carrierId;
+    private String pol; // Port of loading or point of loading
+    private String pod; // Port of discharge or point of discharge
     private String carrier;
+    private String validTo;
+    private String transportType;
+    private String containerTypeSize;
 
-    private String arrangementForRailwayDays;
-    private String transitTimeByTrainDays;
-    private String totalWithoutMovementDays;
-    private String totalTravelDays;
-    private String totalTotalTimeDays;
+    //    sea
+    private String eqpt;
+    private Integer filo;
+    private Integer exclusive;
 
-    private Long storageAtThePortOfArrivalEntity;
-    private Long storageAtTheRailwayOfArrivalEntity;
-
-    private String arrivalDate;
-
+    //    railway
+    private Integer filo20;
+    private Integer filo20HC;
+    private Integer filo40;
 
 }

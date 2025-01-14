@@ -11,4 +11,7 @@ public interface RouteRepo extends JpaRepository<Route, Long> {
 //    void deleteByCarrierId(Long id);
 
 //    List<Route> findByCarrier(Carrier carrier);
+
+    boolean existsByPolAndPodAndEqpt(String pol, String pod, String eqpt);
+
 }
