@@ -1,7 +1,6 @@
 package com.hiss.avalor_backend.dto;
 
 import jakarta.persistence.Column;
-import jakarta.validation.constraints.*;
 import lombok.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,19 +14,19 @@ import java.util.List;
 @Builder
 public class SaveApplicationDto {
 
-    @NotEmpty(message = "Route IDs must not be empty")
+//    @NotEmpty(message = "Route IDs must not be empty")
     private List<Long> ids = new ArrayList<>(); // ids маршрутов
 
-    @NotNull(message = "Total cost of route must not be null")
-    @Min(value = 0, message = "Total cost must be non-negative")
+//    @NotNull(message = "Total cost of route must not be null")
+//    @Min(value = 0, message = "Total cost must be non-negative")
     private Integer totalCostRoute; // Цена маршрута
 
     private String applicationNumber; // Номер заявки
 
-    @NotEmpty(message = "Recipient name is required")
+//    @NotEmpty(message = "Recipient name is required")
     private String nameOfTheRecipient; // Имя получателя
 
-    @NotEmpty(message = "Recipient INN is required")
+//    @NotEmpty(message = "Recipient INN is required")
     private String innOfTheRecipient; // Инн получателя
 
     private String addressOfTheRecipient; // Адрес полчателя

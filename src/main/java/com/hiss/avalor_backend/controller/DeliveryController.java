@@ -1,12 +1,10 @@
 package com.hiss.avalor_backend.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.dto.RouteDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.*;
 import com.hiss.avalor_backend.service.CacheService;
-import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
 import lombok.RequiredArgsConstructor;
@@ -30,16 +28,14 @@ import java.util.stream.Collectors;
 @Slf4j
 public class DeliveryController {
 
-    private final ObjectMapper objectMapper;
-    private final RouteRepo routeRepo;
     private final RouteService routeService;
     private final CacheService cacheService;
-    private final ApplicationRepo applicationRepo;
     private final RouteExcelParserService routeExcelParserService;
-    private final CarrierService carrierService;
-    private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
     private final DropOffRepository dropOffRepository;
     private final RentRepository rentRepository;
+    private final RouteRailwayRepository routeRailwayRepository;
+    private final RouteSeaRepository routeSeaRepository;
+    private final RouteAutoRepository routeAutoRepository;
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping("/by-ids")
@@ -67,13 +63,17 @@ public class DeliveryController {
         RouteWithCost route = routeWithCosts.get(0);
 
 //        RentEntity rentEntity = getRentEntity(route.getRoute());
-        DropOffEntity dropOff = getDropOffEntity(route.getRoute());
+        List<DropOffEntity> dropOff = getDropOffEntity(route.getRoute());
 
         if (dropOff == null) {
             log.warn("Drop off not found: {}", route.getRoute());
         } else {
             log.info("Drop off: {}", dropOff);
         }
+
+        List<Long> railwayIds = collectRouteIds(routeWithCosts, "ЖД");
+        List<Long> autoIds = collectRouteIds(routeWithCosts, "Авто");
+        List<Long> seaIds = collectRouteIds(routeWithCosts, "Море");
 
         return new RouteDto(
                 route.getRoute().stream()
@@ -96,9 +96,63 @@ public class DeliveryController {
                         .collect(Collectors.toList()),
                 route.getTotalCost(),
                 route.getRentEntity(),
-                dropOff
+                dropOff,
+                railwayIds,
+                seaIds,
+                autoIds
         );
     }
+
+    List<Long> collectRouteIds(List<RouteWithCost> routeWithCosts, String transportType) {
+        List<Long> routeIds = new ArrayList<>();
+        for (RouteWithCost routeWithCost : routeWithCosts) {
+            for (Route findRoute : routeWithCost.getRoute()) {
+                switch (transportType) {
+                    case "ЖД":
+                        RouteRailway routeRailway = routeRailwayRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40(
+                                findRoute.getPol(),
+                                findRoute.getPod(),
+                                findRoute.getFilo20(),
+                                findRoute.getFilo20HC(),
+                                findRoute.getFilo40()
+                        );
+                        if (routeRailway != null) {
+                            routeIds.add(routeRailway.getId());
+                        }
+                        break;
+
+                    case "Авто":
+                        RouteAuto routeAuto = routeAutoRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40(
+                                findRoute.getPol(),
+                                findRoute.getPod(),
+                                findRoute.getFilo20(),
+                                findRoute.getFilo20HC(),
+                                findRoute.getFilo40()
+                        );
+                        if (routeAuto != null) {
+                            routeIds.add(routeAuto.getId());
+                        }
+                        break;
+
+                    case "Море":
+                        RouteSea routeSea = routeSeaRepository.findByPolAndPodAndEqpt(
+                                findRoute.getPol(),
+                                findRoute.getPod(),
+                                findRoute.getEqpt()
+                        );
+                        if (routeSea != null) {
+                            routeIds.add(routeSea.getId());
+                        }
+                        break;
+
+                    default:
+                        throw new IllegalArgumentException("Unsupported transport type: " + transportType);
+                }
+            }
+        }
+        return routeIds;
+    }
+
 
     //  Вспомогательные методы для получения RentEntity и DropOffEntity (в контроллере)
     private RentEntity getRentEntity(List<Route> routes) {
@@ -113,18 +167,24 @@ public class DeliveryController {
     }
 
 
-    private DropOffEntity getDropOffEntity(List<Route> routes) {
+    private List<DropOffEntity> getDropOffEntity(List<Route> routes) {
         boolean hasSOC = routes.stream().anyMatch(route -> "SOC".equals(route.getContainerTypeSize()));
         if (hasSOC) {
             return null; // Если есть SOC, DropOff не нужен
         }
 
+        List<DropOffEntity> dropOffEntities = new ArrayList<>();
+
         for (Route route : routes) {
             if ("COC".equals(route.getContainerTypeSize())) {
-                return dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()); // Используем dropOffRepository из контроллера!
+                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+                if (dropOffEntity != null) { // Добавляем только если найден DropOff
+                    dropOffEntities.add(dropOffEntity);
+                }
             }
-        }
-        return null; // Если подходящий DropOff не найден
+        } // Цикл for должен завершиться ПЕРЕД return
+
+        return dropOffEntities; // Возвращаем список (возможно, пустой)
     }
 
 //    @PreAuthorize("hasAuthority('SCOPE_WRITE')")

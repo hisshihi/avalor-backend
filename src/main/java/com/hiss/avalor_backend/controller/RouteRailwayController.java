@@ -34,7 +34,7 @@ public class RouteRailwayController {
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @GetMapping("/{id}")
-    public RouteRailway getOne(@PathVariable Integer id) {
+    public RouteRailway getOne(@PathVariable Long id) {
         Optional<RouteRailway> routeRailwayOptional = routeRailwayRepository.findById(id);
         return routeRailwayOptional.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));

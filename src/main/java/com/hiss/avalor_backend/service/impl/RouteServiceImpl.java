@@ -322,7 +322,7 @@ public class RouteServiceImpl implements RouteService {
         log.info("Поиск маршрутов: текущий город = '{}', конечный город = '{}'.", currentCity, destinationCity);
 
         // Ограничение глубины рекурсии (максимальное количество пересадок)
-        if (currentPath.size() > 1) {
+        if (currentPath.size() > 2) {
             log.debug("Достигнуто максимальное количество промежуточных городов: {}", currentPath);
             return;
         }
@@ -411,27 +411,44 @@ public class RouteServiceImpl implements RouteService {
     }
 
     private RentEntity findRentForRoute(List<Route> path) {
+        log.info("Path: {}", path);
+
         String startCity = path.get(0).getCityFrom();
-        String eqpt = path.get(0).getEqpt();
         String endCity = path.get(path.size() - 1).getCityTo();
 
+        // Find the eqpt for the SOC route
+        String eqpt = path.stream()
+                .filter(route -> "SOC".equals(route.getContainerTypeSize()))
+                .findFirst()
+                .map(Route::getEqpt)
+                .orElse(null);
 
-        RentEntity rent = findRentForRouteByCity(startCity, endCity, eqpt);
-        if (rent != null) {
-            return rent;  // Аренда для всего маршрута найдена
+
+        if (eqpt == null) { // Handle the case where no SOC route is found
+            log.warn("SOC route not found in path or eqpt is null.");
+            return null;
         }
 
+        log.info("Поиск аренды: startCity={}, endCity={}, eqpt={}", startCity, endCity, eqpt);
 
-        // Аренда для всего маршрута не найдена, ищем для отдельных сегментов SOC
-        for (Route route : path) {
-            if ("SOC".equals(route.getContainerTypeSize())) {
-                rent = rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-                if (rent != null) {
-                    return rent; // Аренда для сегмента SOC найдена
-                }
+        RentEntity rent = rentRepository.findByPolAndPodAndSize(startCity, endCity, eqpt);
+
+        if (rent == null) {
+            log.warn("Аренда по городам не найдена.");
+
+            String startPol = determinePolForCity(startCity);
+            String endPod = determinePodForCity(endCity);
+
+            log.info("Поиск аренды: startPol={}, endPod={}, eqpt={}", startPol, endPod, eqpt);
+
+            rent = rentRepository.findByPolAndPodAndSize(startPol, endPod, eqpt);
+
+            if (rent == null) {
+                log.warn("Аренда по POL/POD не найдена.");
             }
         }
-        return null; // Аренда не найдена
+
+        return rent;
     }
 
     // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
@@ -477,8 +494,6 @@ public class RouteServiceImpl implements RouteService {
             return routes.get(0).getPol(); //  Возвращаем POL первого найденного маршрута
         }
 
-
-
         // 3. Если ничего не найдено, можно попробовать другие варианты (например, поиск по таблице городов/портов)
 
         return null; // Если POL не найден
@@ -487,14 +502,14 @@ public class RouteServiceImpl implements RouteService {
     private String determinePodForCity(String city) {
         // Аналогичная логика для POD (с использованием cityTo и pod)
 
-        RouteSea route = routeSeaRepository.findByCityTo(city); //  Нужен репозиторий для Route
-        if (route != null) {
-            return route.getPod();
-        }
-
-        List<RouteSea> routes = routeSeaRepository.findAllByCityToContainingIgnoreCase(city);
+        List<RouteSea> routes = routeSeaRepository.findByCityTo(city); //  Нужен репозиторий для Route
         if (!routes.isEmpty()) {
             return routes.get(0).getPod();
+        }
+
+        List<RouteSea> routesIgnoreCase = routeSeaRepository.findAllByCityToContainingIgnoreCase(city);
+        if (!routesIgnoreCase.isEmpty()) {
+            return routesIgnoreCase.get(0).getPod();
         }
 
 
@@ -600,7 +615,3 @@ public class RouteServiceImpl implements RouteService {
 
 
 }
-
-
-
-

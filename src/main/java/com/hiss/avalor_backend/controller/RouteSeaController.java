@@ -34,7 +34,7 @@ public class RouteSeaController {
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @GetMapping("/{id}")
-    public RouteSea getOne(@PathVariable Integer id) {
+    public RouteSea getOne(@PathVariable Long id) {
         Optional<RouteSea> routeSeaOptional = routeSeaRepository.findById(id);
         return routeSeaOptional.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));

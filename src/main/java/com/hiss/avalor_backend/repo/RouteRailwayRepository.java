@@ -4,9 +4,8 @@ import com.hiss.avalor_backend.entity.RouteRailway;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
-
 @Repository
-public interface RouteRailwayRepository extends JpaRepository<RouteRailway, Integer> {
-    Optional<RouteRailway> findById(Long id);
+public interface RouteRailwayRepository extends JpaRepository<RouteRailway, Long> {
+    RouteRailway findByPolAndPodAndFilo20AndFilo20HCAndFilo40(String pol, String pod, Integer filo20, Integer filo20HC, Integer filo40);
+//    Optional<RouteRailway> findById(Long id);
 }

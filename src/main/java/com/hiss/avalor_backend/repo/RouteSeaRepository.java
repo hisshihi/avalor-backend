@@ -5,11 +5,10 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
-public interface RouteSeaRepository extends JpaRepository<RouteSea, Integer> {
-    RouteSea findByCityTo(String city);
+public interface RouteSeaRepository extends JpaRepository<RouteSea, Long> {
+    List<RouteSea> findByCityTo(String city);
 
     RouteSea findByCityFrom(String city);
 
@@ -17,5 +16,7 @@ public interface RouteSeaRepository extends JpaRepository<RouteSea, Integer> {
 
     List<RouteSea> findAllByCityToContainingIgnoreCase(String city);
 
-    Optional<RouteSea> findById(Long id);
+    RouteSea findByPolAndPodAndEqpt(String pol, String pod, String eqpt);
+
+//    Optional<RouteSea> findById(Long id);
 }
