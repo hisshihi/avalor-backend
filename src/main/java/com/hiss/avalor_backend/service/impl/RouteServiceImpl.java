@@ -30,6 +30,7 @@ public class RouteServiceImpl implements RouteService {
     private final CitiesService citiesService;
     private final DropOffRepository dropOffRepository;
     private final RentRepository rentRepository;
+    private final RouteAutoRepository routeAutoRepository;
 
     /**
      * Основной метод для расчета маршрутов между двумя городами.
@@ -78,6 +79,24 @@ public class RouteServiceImpl implements RouteService {
                     sea.getEqpt(),
                     sea.getFilo(),
                     sea.getExclusive()
+            ));
+        }
+
+        for (RouteAuto auto : routeAutoRepository.findAll()) {
+            log.info("Автомобильный маршрут: " + auto);
+            allRoutes.add(new Route(
+                    auto.getCityFrom(),
+                    auto.getCityTo(),
+                    auto.getPol(),
+                    auto.getPod(),
+                    auto.getCarrier(),
+                    auto.getValidTo(),
+                    auto.getTransportType(),
+                    auto.getContainerTypeSize(),
+                    auto.getExclusive(),
+                    auto.getFilo20(),
+                    auto.getFilo20HC(),
+                    auto.getFilo40()
             ));
         }
 
@@ -147,6 +166,12 @@ public class RouteServiceImpl implements RouteService {
             }
         } else if ("Море".equals(transportType)) {
             return weight.equals(route.getEqpt());
+        } else if ("Авто".equals(transportType)) {
+            if ("20".equals(weight) || "20t".equals(weight)) {
+                return !Objects.equals(route.getFilo20(), 0) || !Objects.equals(route.getFilo20HC(), 0); // 20 or 20t matches either filo20 or filo20HC
+            } else if ("40".equals(weight)) {
+                return !Objects.equals(route.getFilo40(), 0);
+            }
         }
         return false; // No match found
     }
@@ -558,19 +583,19 @@ public class RouteServiceImpl implements RouteService {
         }
         if (route.getFilo20() != null && !route.getFilo20().equals(0)) {
             handlingCost += route.getFilo20();
-            if (route.getTransportType().equals("ЖД") && !route.getFilo20().equals(0)) {
+            if (route.getTransportType().equals("ЖД") || route.getTransportType().equals("Авто") && !route.getFilo20().equals(0)) {
                 route.setEqpt("20");
                 route.setFilo(route.getFilo20());
             }
         } else if (route.getFilo20HC() != null && !route.getFilo20HC().equals(0)) {
             handlingCost += route.getFilo20HC();
-            if (route.getTransportType().equals("ЖД") && !route.getFilo20HC().equals(0)) {
+            if (route.getTransportType().equals("ЖД") || route.getTransportType().equals("Авто") && !route.getFilo20HC().equals(0)) {
                 route.setEqpt("20t");
                 route.setFilo(route.getFilo20HC());
             }
         } else if (route.getFilo40() != null && !route.getFilo40().equals(0)) {
             handlingCost += route.getFilo40();
-            if (route.getTransportType().equals("ЖД") && !route.getFilo40().equals(0)) {
+            if (route.getTransportType().equals("ЖД") || route.getTransportType().equals("Авто") && !route.getFilo40().equals(0)) {
                 route.setEqpt("40");
                 route.setFilo(route.getFilo40());
             }
