@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface DropOffRepository extends JpaRepository<DropOffEntity, Long> {
 
-    DropOffEntity findByPolAndPod(String pol, String pod);
+    DropOffEntity findByPolAndPodAndSize(String pol, String pod, String size);
 
 }

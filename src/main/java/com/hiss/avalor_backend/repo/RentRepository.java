@@ -7,6 +7,6 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface RentRepository extends JpaRepository<RentEntity, Long> {
 
-    RentEntity findByPolAndPod(String pol, String pod);
+    RentEntity findByPolAndPodAndSize(String pol, String pod, String size);
 
 }

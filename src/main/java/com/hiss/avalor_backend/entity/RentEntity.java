@@ -24,7 +24,7 @@ public class RentEntity {
     private String pol;
     private String pod;
     private String carrier;
-    private Integer size;
+    private String size;
     private String validTo;
     private Integer filo;
 

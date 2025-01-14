@@ -129,7 +129,26 @@ public class RouteServiceImpl implements RouteService {
 //        .filter(route -> route.getEqpt().equals(weight))
         return allRoutes.stream()
                 .filter(route -> isValidForDateRange(route.getValidTo(), targetDate))
+                .filter(route -> isValidForWeight(route, weight))
                 .toList();
+    }
+
+    private boolean isValidForWeight(Route route, String weight) {
+        if (weight == null) {
+            return true; //  If weight is null, don't filter by weight
+        }
+
+        String transportType = route.getTransportType();
+        if ("ЖД".equals(transportType)) {
+            if ("20".equals(weight) || "20t".equals(weight)) {
+                return !Objects.equals(route.getFilo20(), 0) || !Objects.equals(route.getFilo20HC(), 0); // 20 or 20t matches either filo20 or filo20HC
+            } else if ("40".equals(weight)) {
+                return !Objects.equals(route.getFilo40(), 0);
+            }
+        } else if ("Море".equals(transportType)) {
+            return weight.equals(route.getEqpt());
+        }
+        return false; // No match found
     }
 
     private boolean isValidForDateRange(String validTo, LocalDate targetDate) {
@@ -376,10 +395,11 @@ public class RouteServiceImpl implements RouteService {
 
     private RentEntity findRentForRoute(List<Route> path) {
         String startCity = path.get(0).getCityFrom();
+        String eqpt = path.get(0).getEqpt();
         String endCity = path.get(path.size() - 1).getCityTo();
 
 
-        RentEntity rent = findRentForRouteByCity(startCity, endCity);
+        RentEntity rent = findRentForRouteByCity(startCity, endCity, eqpt);
         if (rent != null) {
             return rent;  // Аренда для всего маршрута найдена
         }
@@ -388,7 +408,7 @@ public class RouteServiceImpl implements RouteService {
         // Аренда для всего маршрута не найдена, ищем для отдельных сегментов SOC
         for (Route route : path) {
             if ("SOC".equals(route.getContainerTypeSize())) {
-                rent = rentRepository.findByPolAndPod(route.getPol(), route.getPod());
+                rent = rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
                 if (rent != null) {
                     return rent; // Аренда для сегмента SOC найдена
                 }
@@ -398,8 +418,8 @@ public class RouteServiceImpl implements RouteService {
     }
 
     // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
-    private RentEntity findRentForRouteByCity(String startCity, String endCity) {
-        RentEntity rent = rentRepository.findByPolAndPod(startCity, endCity);
+    private RentEntity findRentForRouteByCity(String startCity, String endCity, String eqpt) {
+        RentEntity rent = rentRepository.findByPolAndPodAndSize(startCity, endCity, eqpt);
         if (rent != null) return rent;
 
 
@@ -407,7 +427,7 @@ public class RouteServiceImpl implements RouteService {
         String endPod = determinePodForCity(endCity);
 
         if (startPol != null && endPod != null) {
-            rent = rentRepository.findByPolAndPod(startPol, endPod);
+            rent = rentRepository.findByPolAndPodAndSize(startPol, endPod, eqpt);
             if (rent != null) return rent;
         }
 
@@ -420,7 +440,7 @@ public class RouteServiceImpl implements RouteService {
     private DropOffEntity getDropOffEntity(List<Route> routes) {
         for (Route route : routes) {
             if ("COC".equals(route.getContainerTypeSize()) && route.getTransportType().equals("Море")) {
-                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod());
+                return dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
             }
         }
         return null;
@@ -506,8 +526,8 @@ public class RouteServiceImpl implements RouteService {
      * Расчет стоимости аренды контейнера.
      */
     private int getContainerRentCost(Route route) {
-        if (rentRepository.findByPolAndPod(route.getPol(), route.getPod()) != null) {
-            RentEntity rentCost = rentRepository.findByPolAndPod(route.getPol(), route.getPod()); // Константа для аренды контейнера.
+        if (rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
+            RentEntity rentCost = rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()); // Константа для аренды контейнера.
             log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
                     route.getPol(), route.getPod(), rentCost.getFilo());
             return rentCost.getFilo();
@@ -519,8 +539,8 @@ public class RouteServiceImpl implements RouteService {
     * Расчёт стоимости drop off
     * */
     private int getContainerDropOffCost(Route route) {
-        if (dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()) != null) {
-            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPod(route.getPol(), route.getPod());
+        if (dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
+            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
             log.info("Стоимость drop off для маршрута {} -> {}: {}",
                     route.getPol(), route.getPod(), dropOffEntityCost.getFilo());
             return dropOffEntityCost.getFilo();

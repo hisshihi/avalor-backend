@@ -1,9 +1,7 @@
 package com.hiss.avalor_backend.controller;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.dto.RouteDto;
-import com.hiss.avalor_backend.dto.RouteSaveDto;
 import com.hiss.avalor_backend.dto.RouteSegmentDto;
 import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.*;
@@ -11,22 +9,14 @@ import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CarrierService;
 import com.hiss.avalor_backend.service.RouteExcelParserService;
 import com.hiss.avalor_backend.service.RouteService;
-import jakarta.persistence.EntityNotFoundException;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -115,7 +105,7 @@ public class DeliveryController {
             if (route.getContainerTypeSize().equals("SOC")) {
                 String startPol = route.getPol();
                 String endPod = route.getPod();
-                return rentRepository.findByPolAndPod(startPol, endPod);
+                return rentRepository.findByPolAndPodAndSize(startPol, endPod, route.getEqpt());
             }
         }
         return null; // Возвращаем null, если RentEntity не применима
@@ -130,7 +120,7 @@ public class DeliveryController {
 
         for (Route route : routes) {
             if ("COC".equals(route.getContainerTypeSize())) {
-                return dropOffRepository.findByPolAndPod(route.getPol(), route.getPod()); // Используем dropOffRepository из контроллера!
+                return dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()); // Используем dropOffRepository из контроллера!
             }
         }
         return null; // Если подходящий DropOff не найден

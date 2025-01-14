@@ -26,7 +26,7 @@ public class DropOffEntity {
     private String carrier;
     private String validTo;
     private Integer filo;
-    private Integer size;
+    private String size;
 
     @Override
     public final boolean equals(Object o) {
