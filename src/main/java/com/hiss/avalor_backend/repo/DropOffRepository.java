@@ -9,4 +9,6 @@ public interface DropOffRepository extends JpaRepository<DropOffEntity, Long> {
 
     DropOffEntity findByPolAndPodAndSize(String pol, String pod, String size);
 
+    DropOffEntity findByPolAndPodAndSizeAndCarrier(String pol, String pod, String size, String carrier);
+
 }

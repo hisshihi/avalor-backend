@@ -63,13 +63,13 @@ public class DeliveryController {
         RouteWithCost route = routeWithCosts.get(0);
 
 //        RentEntity rentEntity = getRentEntity(route.getRoute());
-        List<DropOffEntity> dropOff = getDropOffEntity(route.getRoute());
+//        List<DropOffEntity> dropOff = getDropOffEntity(route.getRoute());
 
-        if (dropOff == null) {
-            log.warn("Drop off not found: {}", route.getRoute());
-        } else {
-            log.info("Drop off: {}", dropOff);
-        }
+//        if (dropOff == null) {
+//            log.warn("Drop off not found: {}", route.getRoute());
+//        } else {
+//            log.info("Drop off: {}", dropOff);
+//        }
 
         List<Long> railwayIds = collectRouteIds(routeWithCosts, "ЖД");
         List<Long> autoIds = collectRouteIds(routeWithCosts, "Авто");
@@ -96,7 +96,7 @@ public class DeliveryController {
                         .collect(Collectors.toList()),
                 route.getTotalCost(),
                 route.getRentEntity(),
-                dropOff,
+                route.getDropOff(),
                 railwayIds,
                 seaIds,
                 autoIds
@@ -167,24 +167,23 @@ public class DeliveryController {
     }
 
 
-    private List<DropOffEntity> getDropOffEntity(List<Route> routes) {
-        boolean hasSOC = routes.stream().anyMatch(route -> "SOC".equals(route.getContainerTypeSize()));
-        if (hasSOC) {
-            return null; // Если есть SOC, DropOff не нужен
-        }
-
-        List<DropOffEntity> dropOffEntities = new ArrayList<>();
-
+    private DropOffEntity getDropOffEntity(List<Route> routes) {
         for (Route route : routes) {
-            if ("COC".equals(route.getContainerTypeSize())) {
+            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
+                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
                 DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-                if (dropOffEntity != null) { // Добавляем только если найден DropOff
-                    dropOffEntities.add(dropOffEntity);
+
+                if (dropOffEntity != null) {
+                    log.info("Найден dropOffEntity: {}", dropOffEntity);
+                    return dropOffEntity;
+                } else {
+                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
+                    return null;
                 }
             }
-        } // Цикл for должен завершиться ПЕРЕД return
-
-        return dropOffEntities; // Возвращаем список (возможно, пустой)
+        }
+        log.warn("Морской маршрут с COC не найден в этом пути.");
+        return null;
     }
 
 //    @PreAuthorize("hasAuthority('SCOPE_WRITE')")

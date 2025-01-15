@@ -390,65 +390,119 @@ public class RouteServiceImpl implements RouteService {
      */
     private List<RouteWithCost> convertToRouteWithCosts(List<Route> path) {
         RentEntity rentEntity = null;
-        DropOffEntity dropOff = null;
+        DropOffEntity dropOffEntity = null;
 
-        boolean hasSOC = path.stream().anyMatch(route -> "SOC".equals(route.getContainerTypeSize()));
-        boolean hasCOC = path.stream().anyMatch(route -> "COC".equals(route.getContainerTypeSize())); //check for COC
+        boolean hasSea = path.stream().anyMatch(route -> "Море".equals(route.getTransportType()));
 
-        if (hasSOC) {
-            rentEntity = findRentForRoute(path);
-        }
-//         else if (hasCOC) { // Only check for and apply dropOff if SOC is not present and COC is present.
-//            dropOff = getDropOffEntity(path); //  Перемещено в else, чтобы не искать dropOff, если есть SOC
-//        }
+        if (hasSea) {
+            Optional<Route> seaRoute = path.stream()
+                    .filter(route -> "Море".equals(route.getTransportType()))
+                    .findFirst();
 
-        // Расчет общей стоимости всего маршрута.
-        int totalCost = path.stream().mapToInt(this::calculateSegmentCost).sum();
-        log.debug("Расчет общей стоимости маршрута: {}.", totalCost);
+            if (seaRoute.isPresent()) {
+                if ("SOC".equals(seaRoute.get().getContainerTypeSize())) {
+                    rentEntity = findRentForRoute(path);
+                } else if ("COC".equals(seaRoute.get().getContainerTypeSize())) {
+                    String seaCarrier = seaRoute.get().getCarrier(); // Получаем перевозчика морского маршрута
 
-        // Create a single RouteWithCost for the entire path.
-        return List.of(new RouteWithCost(path, totalCost, rentEntity, dropOff));
-    }
-
-    private RentEntity findRentForRoute(List<Route> path) {
-        log.info("Path: {}", path);
-
-        String startCity = path.get(0).getCityFrom();
-        String endCity = path.get(path.size() - 1).getCityTo();
-
-        // Find the eqpt for the SOC route
-        String eqpt = path.stream()
-                .filter(route -> "SOC".equals(route.getContainerTypeSize()))
-                .findFirst()
-                .map(Route::getEqpt)
-                .orElse(null);
+                    String combinedPol = null;  // Для хранения POL комбинированного маршрута
+                    String combinedPod = null; // Для хранения POD комбинированного маршрута
+                    String eqpt = null;
 
 
-        if (eqpt == null) { // Handle the case where no SOC route is found
-            log.warn("SOC route not found in path or eqpt is null.");
-            return null;
-        }
+                    // 1. Проверяем наличие комбинированного маршрута Авто + ЖД
+                    Optional<Route> autoRoute = path.stream()
+                            .filter(r -> "Авто".equals(r.getTransportType()))
+                            .findFirst();
+                    Optional<Route> railwayRoute = path.stream()
+                            .filter(r -> "ЖД".equals(r.getTransportType()))
+                            .findFirst();
 
-        log.info("Поиск аренды: startCity={}, endCity={}, eqpt={}", startCity, endCity, eqpt);
+                    if (autoRoute.isPresent() && railwayRoute.isPresent()) {
+                        combinedPol = autoRoute.get().getPol();
+                        combinedPod = railwayRoute.get().getPod();
+                        eqpt = determineEqptFromFilo(railwayRoute.get());
 
-        RentEntity rent = rentRepository.findByPolAndPodAndSize(startCity, endCity, eqpt);
+                    } else if (railwayRoute.isPresent()) { // Если только жд
+                        combinedPol = railwayRoute.get().getPol();
+                        combinedPod = railwayRoute.get().getPod();
+                        eqpt = determineEqptFromFilo(railwayRoute.get());
 
-        if (rent == null) {
-            log.warn("Аренда по городам не найдена.");
+                    }
 
-            String startPol = determinePolForCity(startCity);
-            String endPod = determinePodForCity(endCity);
+                    if (combinedPol != null && combinedPod != null && eqpt != null) {
+                        // Ищем drop off с учётом перевозчика
+                        dropOffEntity = dropOffRepository.findByPolAndPodAndSizeAndCarrier(combinedPol, combinedPod, eqpt, seaCarrier);
 
-            log.info("Поиск аренды: startPol={}, endPod={}, eqpt={}", startPol, endPod, eqpt);
+//                        dropOffEntity = dropOffRepository.findByPolAndPodAndSize(combinedPol, combinedPod, eqpt);
 
-            rent = rentRepository.findByPolAndPodAndSize(startPol, endPod, eqpt);
+                        if (dropOffEntity == null) { // Если не нашлось с учетом перевозчика, ищем по ЖД без учета перевозчика
+                            dropOffEntity = dropOffRepository.findByPolAndPodAndSize(
+                                    railwayRoute.get().getPol(), railwayRoute.get().getPod(), eqpt
+                            );
+                            if (dropOffEntity == null) { // Если и так не нашлось, ищем по морю без учета перевозчика
+                                dropOffEntity = dropOffRepository.findByPolAndPodAndSize(
+                                        seaRoute.get().getPol(), seaRoute.get().getPod(), seaRoute.get().getEqpt()
+                                );
+                            }
+                        }
 
-            if (rent == null) {
-                log.warn("Аренда по POL/POD не найдена.");
+                    } else {
+                        // Если нет ни комбинированного маршрута, ни только ЖД, используем данные морского маршрута
+                        dropOffEntity = dropOffRepository.findByPolAndPodAndSizeAndCarrier(
+                                seaRoute.get().getPol(), seaRoute.get().getPod(), seaRoute.get().getEqpt(), seaCarrier
+                        );
+
+                        if (dropOffEntity == null) { // Если и так не нашлось, ищем по морю без учета перевозчика
+                            dropOffEntity = dropOffRepository.findByPolAndPodAndSize(
+                                    seaRoute.get().getPol(), seaRoute.get().getPod(), seaRoute.get().getEqpt()
+                            );
+                        }
+                    }
+                }
             }
         }
 
-        return rent;
+        final RentEntity finalRentEntity = rentEntity;
+        final DropOffEntity finalDropOffEntity = dropOffEntity;
+
+        int totalCost = path.stream().mapToInt(route -> calculateSegmentCost(route, finalRentEntity, finalDropOffEntity)).sum();
+
+        return List.of(new RouteWithCost(path, totalCost, rentEntity, dropOffEntity));
+    }
+
+    private String determineEqptFromFilo(Route route) {
+        if (route.getFilo20() != null && route.getFilo20() != 0) {
+            return "20";
+        } else if (route.getFilo20HC() != null && route.getFilo20HC() != 0) {
+            return "20t";
+        } else if (route.getFilo40() != null && route.getFilo40() != 0) {
+            return "40";
+        } else {
+            return null; // Или другое значение по умолчанию/обработка ошибки, если нужно
+        }
+    }
+
+
+    private RentEntity findRentForRoute(List<Route> path) {
+        Optional<Route> socSeaRoute = path.stream()
+                .filter(route -> "Море".equals(route.getTransportType()) && "SOC".equals(route.getContainerTypeSize()))
+                .findFirst();
+
+        if (socSeaRoute.isEmpty()) {
+            log.warn("SOC sea route not found in path.");
+            return null;
+        }
+
+        Route seaRoute = socSeaRoute.get();
+
+        // Начальный город всего маршрута
+        String startCity = path.get(0).getCityFrom();
+
+        // Конечный город всего маршрута
+        String endCity = path.get(path.size() - 1).getCityTo(); // Последний город в пути
+
+        return rentRepository.findByPolAndPodAndSize(startCity, endCity, seaRoute.getEqpt());
     }
 
     // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
@@ -470,13 +524,24 @@ public class RouteServiceImpl implements RouteService {
 
     }
 
-    // getDropOffEntity в сервисе (тоже исправляем для согласованности):
     private DropOffEntity getDropOffEntity(List<Route> routes) {
         for (Route route : routes) {
-            if ("COC".equals(route.getContainerTypeSize()) && route.getTransportType().equals("Море")) {
-                return dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+            log.info("route with getDropOffEntity: {}", route);
+            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
+                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
+                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+                log.info("Drop off entity: {}", dropOffEntity);
+
+                if (dropOffEntity != null) {
+                    log.info("Найден dropOffEntity: {}", dropOffEntity);
+                    return dropOffEntity;
+                } else {
+                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
+                    return null;
+                }
             }
         }
+        log.warn("Морской маршрут с COC не найден в этом пути.");
         return null;
     }
 
@@ -529,26 +594,24 @@ public class RouteServiceImpl implements RouteService {
     /**
      * Расчет стоимости сегмента маршрута.
      */
-    private int calculateSegmentCost(Route route) {
+    private int calculateSegmentCost(Route route, final RentEntity rentEntity, final DropOffEntity dropOffEntity) {
 
         int routeCost = 0;
         log.trace("Начальная стоимость маршрута: {} -> {} = {}.",
                 route.getCityFrom(), route.getCityTo(), routeCost);
 
-        if ("SOC".equals(route.getContainerTypeSize())) {
-            int rentCost = getContainerRentCost(route);
-            routeCost += rentCost;
-            log.info("Добавлена стоимость аренды контейнера: {}.", rentCost);
-        }
-        if ("COC".equals(route.getContainerTypeSize())) {
-            int dropOffCost = getContainerDropOffCost(route);
-            routeCost += dropOffCost;
-            log.info("Добавлена стоимость drop off: {}", dropOffCost);
+        if ("SOC".equals(route.getContainerTypeSize()) && rentEntity != null) {
+            routeCost += rentEntity.getFilo();
+            log.info("Добавлена стоимость аренды контейнера: {}.", rentEntity.getFilo());
+
+        } else if ("COC".equals(route.getContainerTypeSize()) && "Море".equals(route.getTransportType())  && dropOffEntity != null) {
+            routeCost += dropOffEntity.getFilo();
+            log.info("Добавлена стоимость drop off: {}.", dropOffEntity.getFilo());
         }
 
-        int handlingCost = getHandlingCost(route);
-        routeCost += handlingCost;
-        log.info("Добавлена стоимость обработки: {}.", handlingCost);
+//        int handlingCost = getHandlingCost(route);
+        routeCost += getHandlingCost(route);
+        log.info("Добавлена стоимость обработки: {}.", routeCost);
 
         log.info("Итоговая стоимость сегмента {} -> {} = {}.", route.getCityFrom(), route.getCityTo(), routeCost);
         return routeCost;
@@ -611,7 +674,5 @@ public class RouteServiceImpl implements RouteService {
                 route.getCityFrom(), route.getCityTo(), handlingCost);
         return handlingCost;
     }
-
-
 
 }
