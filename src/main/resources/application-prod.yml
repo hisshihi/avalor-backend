@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:postgresql://autorack.proxy.rlwy.net:20682/railway
-    username: postgres
-    password: SfghFEfimyDKbCMeyMLAvsyScmGetLyK
+    url: jdbc:postgresql://amvera-nuclearguy98-cnpg-avalog-psql-rw:5432/mydb
+    username: hiss-avalog
+    password: SfghFEfimyDKbCMeyMLAvsyScmGet
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
