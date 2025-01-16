@@ -25,4 +25,7 @@ public class AuthResponseDto {
     @JsonProperty("user_name")
     private String userName;
 
+    @JsonProperty("verification_link")
+    private String verificationLink;
+
 }
