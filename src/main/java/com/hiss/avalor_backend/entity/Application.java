@@ -2,7 +2,6 @@ package com.hiss.avalor_backend.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -24,13 +23,13 @@ public class Application {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToMany(cascade = CascadeType.REMOVE)
-    @JoinTable(
-            name = "application_routes",
-            joinColumns = @JoinColumn(name = "application_id"),
-            inverseJoinColumns = @JoinColumn(name = "route_id")
-    )
-    private List<Route> routes;
+//    @ManyToMany(cascade = CascadeType.REMOVE)
+//    @JoinTable(
+//            name = "application_routes",
+//            joinColumns = @JoinColumn(name = "application_id"),
+//            inverseJoinColumns = @JoinColumn(name = "route_id")
+//    )
+//    private List<Route> routes;
 
     @ManyToMany
     @JoinTable(
@@ -39,6 +38,31 @@ public class Application {
             inverseJoinColumns = @JoinColumn(name = "additional_service_id")
     )
     private List<AdditionalService> additionalServices;
+
+    @ManyToMany(cascade = CascadeType.REMOVE)
+    @JoinTable(
+            name = "application_sea_routes",
+            joinColumns = @JoinColumn(name = "application_id"),
+            inverseJoinColumns = @JoinColumn(name = "sea_route_id")
+    )
+    private List<RouteSea> seaRoutes;
+
+    @ManyToMany(cascade = CascadeType.REMOVE)
+    @JoinTable(
+            name = "application_railway_routes",
+            joinColumns = @JoinColumn(name = "application_id"),
+            inverseJoinColumns = @JoinColumn(name = "railway_route_id")
+    )
+    private List<RouteRailway> railwayRoutes;
+
+    @ManyToMany(cascade = CascadeType.REMOVE)
+    @JoinTable(
+            name = "application_auto_routes",
+            joinColumns = @JoinColumn(name = "application_id"),
+            inverseJoinColumns = @JoinColumn(name = "auto_route_id")
+    )
+    private List<RouteAuto> autoRoutes;
+
 
     private int totalCostRoute; // Примитивы вместо Integer
     private String applicationNumber;

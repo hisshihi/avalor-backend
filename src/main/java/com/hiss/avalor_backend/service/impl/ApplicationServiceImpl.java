@@ -2,13 +2,8 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.dto.SaveApplicationDto;
 import com.hiss.avalor_backend.dto.UpdateApplicationDto;
-import com.hiss.avalor_backend.entity.AdditionalService;
-import com.hiss.avalor_backend.entity.Application;
-import com.hiss.avalor_backend.entity.Route;
-import com.hiss.avalor_backend.entity.UserEntity;
-import com.hiss.avalor_backend.repo.AdditionalServiceRepo;
-import com.hiss.avalor_backend.repo.ApplicationRepo;
-import com.hiss.avalor_backend.repo.UserRepo;
+import com.hiss.avalor_backend.entity.*;
+import com.hiss.avalor_backend.repo.*;
 import com.hiss.avalor_backend.service.ApplicationService;
 import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.RouteService;
@@ -44,6 +39,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final AdditionalServiceRepo additionalServiceRepo;
     private final CacheService cacheService;
     private final AmoCrmService amoCrmService;
+    private final RouteRailwayRepository routeRailwayRepository;
+    private final RouteSeaRepository routeSeaRepository;
+    private final RouteAutoRepository routeAutoRepository;
 
     @Override
     public void saveApplication(SaveApplicationDto dto, Principal principal) {
@@ -52,9 +50,19 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new UsernameNotFoundException("User not found");
         }
 
-        // Получение маршрутов
-        List<Route> routes = dto.getIds().stream()
-                .map(routeService::getRouteById)
+        // Получение морских маршрутов
+        List<RouteSea> seaRoutes = dto.getSeaRouteIds().stream()
+                .map(routeSeaRepository::getById)
+                .collect(Collectors.toList());
+
+// Получение железнодорожных маршрутов
+        List<RouteRailway> railwayRoutes = dto.getRailwayIds().stream()
+                .map(routeRailwayRepository::getById)
+                .collect(Collectors.toList());
+
+// Получение автомобильных маршрутов
+        List<RouteAuto> autoRoutes = dto.getAutoRouteIds().stream()
+                .map(routeAutoRepository::getById)
                 .collect(Collectors.toList());
 
         // Получение дополнительных услуг
@@ -65,6 +73,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         // Преобразование DTO в сущность Application
         Application application = Application.builder()
+                .seaRoutes(seaRoutes)
+                .railwayRoutes(railwayRoutes)
+                .autoRoutes(autoRoutes)
                 .totalCostRoute(dto.getTotalCostRoute())
                 .applicationNumber(dto.getApplicationNumber())
                 .nameOfTheRecipient(dto.getNameOfTheRecipient())
@@ -83,8 +94,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .image2(saveImage(dto.getImage2()))
                 .allTotalCost(dto.getAllTotalCost())
                 .createdBy(user.get())
-                .routes(routes)
-                .additionalServices(additionalServices) // Устанавливаем дополнительные услуги
                 .line(dto.getLine())
                 .comment(dto.getComment())
                 .ship(dto.getShip())
@@ -92,7 +101,6 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .cityFrom(dto.getCityFrom())
                 .placeDropOff(dto.getPlaceDropOff())
                 .portOfArrival(dto.getPortOfArrival())
-                .placeDropOff(dto.getPlaceDropOff())
                 .typeOfEquipment(dto.getTypeOfEquipment())
                 .freightForwarder(dto.getFreightForwarder())
                 .build();
@@ -102,7 +110,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         clearCache();
 
-        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routes, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost(), application.getId());
+//        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routeRailways, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost(), application.getId());
     }
 
     private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost, Long applicationId) {
@@ -141,7 +149,9 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         Page<Application> applications = applicationRepository.findByCreatedById(user.get().getId(), pageable);
         applications.forEach(application -> {
-            Hibernate.initialize(application.getRoutes()); // Инициализация ленивой коллекции
+            Hibernate.initialize(application.getRailwayRoutes());
+            Hibernate.initialize(application.getSeaRoutes());
+            Hibernate.initialize(application.getAutoRoutes());
             Hibernate.initialize(application.getAdditionalServices());
         });
         return applications;
@@ -153,7 +163,9 @@ public class ApplicationServiceImpl implements ApplicationService {
     public Page<Application> findAll(Pageable pageable) {
         Page<Application> applications = applicationRepository.findAll(pageable);
         applications.forEach(application -> {
-            Hibernate.initialize(application.getRoutes());
+            Hibernate.initialize(application.getRailwayRoutes());
+            Hibernate.initialize(application.getSeaRoutes());
+            Hibernate.initialize(application.getAutoRoutes());
             Hibernate.initialize(application.getAdditionalServices());
         });
         return applications;
@@ -217,11 +229,34 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // Обновить маршруты, если переданы
-        if (dto.getIds() != null) {
-            List<Route> routes = dto.getIds().stream()
-                    .map(routeService::getRouteById)
+//        if (dto.getIds() != null) {
+//            List<Route> routes = dto.getIds().stream()
+//                    .map(routeService::getRouteById)
+//                    .collect(Collectors.toList());
+//            application.setRoutes(routes);
+//        }
+
+        if (dto.getSeaRouteIds() != null) {
+            List<RouteSea> routeSeas = dto.getSeaRouteIds().stream()
+                    .map(routeSeaRepository::getById)
                     .collect(Collectors.toList());
-            application.setRoutes(routes);
+            application.setSeaRoutes(routeSeas);
+        }
+
+        if (dto.getRailwayIds() != null) {
+            List<RouteRailway> routeRailways = dto.getRailwayIds().stream()
+                    .map(routeId -> routeRailwayRepository.findById(routeId)
+                            .orElseThrow(() -> new IllegalArgumentException("Route not found with ID: " + routeId))
+                    )
+                    .collect(Collectors.toList());
+            application.setRailwayRoutes(routeRailways);
+        }
+
+        if (dto.getAutoRouteIds() != null) {
+            List<RouteAuto> routeAutos = dto.getAutoRouteIds().stream()
+                    .map(routeAutoRepository::getById)
+                    .collect(Collectors.toList());
+            application.setAutoRoutes(routeAutos);
         }
 
         // Обновить дополнительные услуги, если переданы
@@ -301,11 +336,34 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         // Обновить маршруты, если переданы
-        if (dto.getIds() != null) {
-            List<Route> routes = dto.getIds().stream()
-                    .map(routeService::getRouteById)
+//        if (dto.getIds() != null) {
+//            List<Route> routes = dto.getIds().stream()
+//                    .map(routeService::getRouteById)
+//                    .collect(Collectors.toList());
+//            application.setRoutes(routes);
+//        }
+
+        if (dto.getSeaRouteIds() != null) {
+            List<RouteSea> routeSeas = dto.getSeaRouteIds().stream()
+                    .map(routeSeaRepository::getById)
                     .collect(Collectors.toList());
-            application.setRoutes(routes);
+            application.setSeaRoutes(routeSeas);
+        }
+
+        if (dto.getRailwayIds() != null) {
+            List<RouteRailway> routeRailways = dto.getRailwayIds().stream()
+                    .map(routeId -> routeRailwayRepository.findById(routeId)
+                            .orElseThrow(() -> new IllegalArgumentException("Route not found with ID: " + routeId))
+                    )
+                    .collect(Collectors.toList());
+            application.setRailwayRoutes(routeRailways);
+        }
+
+        if (dto.getAutoRouteIds() != null) {
+            List<RouteAuto> routeAutos = dto.getAutoRouteIds().stream()
+                    .map(routeAutoRepository::getById)
+                    .collect(Collectors.toList());
+            application.setAutoRoutes(routeAutos);
         }
 
         // Обновить дополнительные услуги, если переданы
@@ -335,7 +393,10 @@ public class ApplicationServiceImpl implements ApplicationService {
                 .orElseThrow(() -> new EntityNotFoundException("Application not found with ID: " + id + " for user: " + user.getUsername()));
 
         // Очищаем связи между заявками и маршрутами
-        application.getRoutes().clear();
+//        application.getRoutes().clear();
+        application.getRailwayRoutes().clear();
+        application.getAutoRoutes().clear();
+        application.getSeaRoutes().clear();
         applicationRepository.save(application);
 
         // Удаляем заявку
@@ -350,7 +411,10 @@ public class ApplicationServiceImpl implements ApplicationService {
     public void deleteApplication(Long id) {
         Application application = applicationRepository.findById(id).orElseThrow(() -> new EntityNotFoundException("Application not found"));
 
-        application.getRoutes().clear();
+//        application.getRoutes().clear();
+        application.getRailwayRoutes().clear();
+        application.getAutoRoutes().clear();
+        application.getSeaRoutes().clear();
         applicationRepository.save(application);
 
         applicationRepository.delete(application);

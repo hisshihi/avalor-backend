@@ -15,7 +15,11 @@ import java.util.List;
 public class SaveApplicationDto {
 
 //    @NotEmpty(message = "Route IDs must not be empty")
-    private List<Long> ids = new ArrayList<>(); // ids маршрутов
+//    private List<Long> ids = new ArrayList<>(); // ids маршрутов
+
+    private List<Long> seaRouteIds = new ArrayList<>();
+    private List<Long> railwayIds = new ArrayList<>();
+    private List<Long> autoRouteIds = new ArrayList<>();
 
 //    @NotNull(message = "Total cost of route must not be null")
 //    @Min(value = 0, message = "Total cost must be non-negative")

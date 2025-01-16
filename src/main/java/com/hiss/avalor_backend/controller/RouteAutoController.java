@@ -34,7 +34,7 @@ public class RouteAutoController {
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @GetMapping("/{id}")
-    public RouteAuto getOne(@PathVariable Integer id) {
+    public RouteAuto getOne(@PathVariable Long id) {
         Optional<RouteAuto> routeAutoOptional = routeAutoRepository.findById(id);
         return routeAutoOptional.orElseThrow(() ->
                 new ResponseStatusException(HttpStatus.NOT_FOUND, "Entity with id `%s` not found".formatted(id)));

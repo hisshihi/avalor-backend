@@ -28,8 +28,15 @@ public class UpdateApplicationDto {
     private Integer totalCostRoute;
     private Integer allTotalCost;
 
+//    @Size(min = 1)
+//    private List<Long> ids; // IDs маршрутов
+
     @Size(min = 1)
-    private List<Long> ids; // IDs маршрутов
+    private List<Long> seaRouteIds;
+    @Size(min = 1)
+    private List<Long> railwayIds;
+    @Size(min = 1)
+    private List<Long> autoRouteIds;
 
     @Size(min = 1)
     private List<Long> additionalServiceIds; // IDs дополнительных услуг
