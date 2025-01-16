@@ -75,6 +75,9 @@ public class JwtTokenGenerator {
         if (roles.contains("ROLE_USER")) {
             permissions.add("READ");
         }
+        if (roles.contains("ROLE_UNVERIFIED")) {
+            permissions.add("");
+        }
 
         return String.join(" ", permissions);
     }

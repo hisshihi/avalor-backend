@@ -1,4 +1,9 @@
 spring:
+  mail:
+    host: smtp.leon-studio.ru
+    port: 587
+    username: leon@leon-studio.ru
+    password: nB7nQ9eN3xqP4dC4
   profiles:
     active: dev
   application:

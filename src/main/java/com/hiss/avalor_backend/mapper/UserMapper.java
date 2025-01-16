@@ -16,7 +16,7 @@ public class UserMapper {
         userInfoEntity.setUsername(userRegistrationDto.username());
 //        userInfoEntity.setEmailId(userRegistrationDto.userEmail());
 //        userInfoEntity.setMobileNumber(userRegistrationDto.userMobileNo());
-        userInfoEntity.setRoles(userRegistrationDto.userRole());
+//        userInfoEntity.setRoles(userRegistrationDto.userRole());
         userInfoEntity.setPassword(passwordEncoder.encode(userRegistrationDto.userPassword()));
         return userInfoEntity;
     }

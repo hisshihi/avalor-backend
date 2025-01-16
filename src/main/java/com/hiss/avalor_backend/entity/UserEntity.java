@@ -24,6 +24,7 @@ public class UserEntity {
     private String username;
     private String password;
     private String roles;
+    private boolean emailIsVerification = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @ToString.Exclude
@@ -49,9 +50,10 @@ public class UserEntity {
     @Override
     public String toString() {
         return getClass().getSimpleName() + "(" +
-               "id = " + id + ", " +
-               "username = " + username + ", " +
-               "password = " + password + ", " +
-               "roles = " + roles + ")";
+                "id = " + id + ", " +
+                "username = " + username + ", " +
+                "password = " + password + ", " +
+                "emailIsVerified = " + emailIsVerification + ", " +
+                "roles = " + roles + ")";
     }
 }

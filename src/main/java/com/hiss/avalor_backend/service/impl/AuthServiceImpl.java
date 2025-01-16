@@ -6,10 +6,13 @@ import com.hiss.avalor_backend.dto.UserRegistrationDto;
 import com.hiss.avalor_backend.entity.RefreshTokenEntity;
 import com.hiss.avalor_backend.entity.TokenType;
 import com.hiss.avalor_backend.entity.UserEntity;
+import com.hiss.avalor_backend.entity.VerificationToken;
 import com.hiss.avalor_backend.mapper.UserMapper;
 import com.hiss.avalor_backend.repo.RefreshTokenRepo;
 import com.hiss.avalor_backend.repo.UserRepo;
+import com.hiss.avalor_backend.repo.VerificationTokenRepo;
 import com.hiss.avalor_backend.service.AuthService;
+import com.hiss.avalor_backend.service.EmailService;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +24,10 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -33,6 +38,8 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenGenerator jwtTokenGenerator;
     private final RefreshTokenRepo refreshTokenRepo;
     private final UserMapper userMapper;
+    private final VerificationTokenRepo verificationTokenRepo;
+    private final EmailService emailService;
 
     private static Authentication createAuthenticationObject(UserEntity userInfoEntity) {
         // Extract user details from UserDetailsEntity
@@ -114,20 +121,35 @@ public class AuthServiceImpl implements AuthService {
         try {
             log.info("[AuthService:registerUser]User Registration Started with :::{}", userRegistrationDto);
 
-            Optional<UserEntity> user = userRepo.findByUsername(userRegistrationDto.userPassword());
+            Optional<UserEntity> user = userRepo.findByUsername(userRegistrationDto.username());
             if (user.isPresent()) {
                 throw new Exception("User Already Exist");
             }
 
             UserEntity userDetailsEntity = userMapper.convertToEntity(userRegistrationDto);
+            userDetailsEntity.setRoles("ROLE_UNVERIFIED");
+            userDetailsEntity.setEmailIsVerification(false);
+            UserEntity savedUserDetails = userRepo.save(userDetailsEntity);
+
             Authentication authentication = createAuthenticationObject(userDetailsEntity);
 
+            // Generate validate token
+            String token = UUID.randomUUID().toString();
+            VerificationToken verificationToken = new VerificationToken();
+            verificationToken.setToken(token);
+            verificationToken.setUser(savedUserDetails);
+            verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
+            verificationTokenRepo.save(verificationToken);
+
+            // TODO: добавить асинхронную работу к отправке почты
+            // Отправка письма
+            String verificationLink = "https://avalog-calculator.onrender.com/api/auth/verify-email?token=" + token;
+            emailService.sendVerificationEmail(userRegistrationDto.username(), verificationLink);
 
             // Generate a JWT token
             String accessToken = jwtTokenGenerator.generateAccessToken(authentication);
             String refreshToken = jwtTokenGenerator.generateRefreshToken(authentication);
 
-            UserEntity savedUserDetails = userRepo.save(userDetailsEntity);
             saveUserRefreshToken(userDetailsEntity, refreshToken);
 
             creatRefreshTokenCookie(response, refreshToken);
@@ -138,6 +160,7 @@ public class AuthServiceImpl implements AuthService {
                     .accessTokenExpiry(5 * 60)
                     .userName(savedUserDetails.getUsername())
                     .tokenType(TokenType.Bearer)
+                    .verificationLink(verificationLink)
                     .build();
 
 

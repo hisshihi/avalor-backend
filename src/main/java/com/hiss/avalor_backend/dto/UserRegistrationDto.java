@@ -1,6 +1,5 @@
 package com.hiss.avalor_backend.dto;
 
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotEmpty;
 
 public record UserRegistrationDto (
@@ -12,7 +11,7 @@ public record UserRegistrationDto (
 //        String userEmail,
 
         @NotEmpty(message = "User password must not be empty")
-        String userPassword,
-        @NotEmpty(message = "User role must not be empty")
-        String userRole
+        String userPassword
+//        @NotEmpty(message = "User role must not be empty")
+//        String userRole
 ){ }
