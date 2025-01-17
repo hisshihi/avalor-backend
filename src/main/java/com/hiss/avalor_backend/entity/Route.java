@@ -31,14 +31,18 @@ public class Route {
     //    sea
     private String eqpt;
     private Integer filo;
+    private Integer filoD;
     private Integer exclusive;
 
     //    railway
     private Integer filo20;
+    private Integer filo20D;
     private Integer filo20HC;
+    private Integer filo20HCD;
     private Integer filo40;
+    private Integer filo40D;
 
-    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, String eqpt, Integer filo, Integer exclusive) {
+    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, String eqpt, Integer filo, Integer filoD, Integer exclusive) {
         this.cityFrom = cityFrom;
         this.cityTo = cityTo;
         this.pol = pol;
@@ -49,10 +53,11 @@ public class Route {
         this.containerTypeSize = containerTypeSize;
         this.eqpt = eqpt;
         this.filo = filo;
+        this.filoD = filoD;
         this.exclusive = exclusive;
     }
 
-    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, Integer exclusive, Integer filo20, Integer filo20HC, Integer filo40) {
+    public Route(String cityFrom, String cityTo, String pol, String pod, String carrier, String validTo, String transportType, String containerTypeSize, Integer exclusive, Integer filo20, Integer filo20HC, Integer filo40, Integer filo20D, Integer filo20HCD, Integer filo40D) {
         this.cityFrom = cityFrom;
         this.cityTo = cityTo;
         this.pol = pol;
@@ -65,6 +70,9 @@ public class Route {
         this.filo20 = filo20;
         this.filo20HC = filo20HC;
         this.filo40 = filo40;
+        this.filo20D = filo20D;
+        this.filo20HCD = filo20HCD;
+        this.filo40D = filo40D;
     }
 
     @Override

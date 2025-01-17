@@ -20,8 +20,11 @@ public class RouteAuto {
     private Long id;
 
     private Integer filo20;
+    private Integer filo20D;
     private Integer filo20HC;
+    private Integer filo20HCD;
     private Integer filo40;
+    private Integer filo40D;
     private String containerTypeSize = "COC"; // Default value
     private String cityFrom;
     private String cityTo;

@@ -88,6 +88,7 @@ public class DeliveryController {
                                     r.getTransportType(),
                                     r.getContainerTypeSize(),
                                     r.getFilo(),
+                                    r.getFiloD(),
                                     r.getPol(),
                                     r.getPod()
                             );

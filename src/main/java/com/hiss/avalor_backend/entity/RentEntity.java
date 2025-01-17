@@ -27,6 +27,7 @@ public class RentEntity {
     private String size;
     private String validTo;
     private Integer filo;
+    private Integer filoD;
 
     @Override
     public final boolean equals(Object o) {
@@ -53,6 +54,7 @@ public class RentEntity {
                 "carrier = " + carrier + ", " +
                 "size = " + size + ", " +
                 "validTo = " + validTo + ", " +
+                "filoD = " + filoD + ", " +
                 "filo = " + filo + ")";
     }
 }

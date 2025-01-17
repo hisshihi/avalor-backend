@@ -60,7 +60,10 @@ public class RouteServiceImpl implements RouteService {
                     railway.getExclusive(),
                     railway.getFilo20(),
                     railway.getFilo20HC(),
-                    railway.getFilo40()
+                    railway.getFilo40(),
+                    railway.getFilo20D(),
+                    railway.getFilo20HCD(),
+                    railway.getFilo40D()
             ));
         }
 
@@ -78,6 +81,7 @@ public class RouteServiceImpl implements RouteService {
                     sea.getContainerTypeSize(),
                     sea.getEqpt(),
                     sea.getFilo(),
+                    sea.getFiloD(),
                     sea.getExclusive()
             ));
         }
@@ -96,7 +100,10 @@ public class RouteServiceImpl implements RouteService {
                     auto.getExclusive(),
                     auto.getFilo20(),
                     auto.getFilo20HC(),
-                    auto.getFilo40()
+                    auto.getFilo40(),
+                    auto.getFilo20D(),
+                    auto.getFilo20HCD(),
+                    auto.getFilo40D()
             ));
         }
 
@@ -144,7 +151,7 @@ public class RouteServiceImpl implements RouteService {
                     }
 
                     if (!routeRepo.existsByPolAndPodAndEqpt(route.getPol(), route.getPod(), route.getEqpt())) {
-                        create(routeSaveDto);
+//                        create(routeSaveDto);
                     }
                 }
             }

@@ -19,6 +19,7 @@ public class RouteSegmentDto {
     String transportType;
     String containerTypeSize;
     Integer filo;
+    Integer filoD;
     String pol;
     String pod;
 

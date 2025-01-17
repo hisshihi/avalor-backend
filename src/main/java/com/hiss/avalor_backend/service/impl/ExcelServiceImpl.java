@@ -165,6 +165,9 @@ public class ExcelServiceImpl implements ExcelService {
                     railway.setFilo20HC(Integer.parseInt(getCellValue(row.getCell(7))));
                     railway.setFilo40(Integer.parseInt(getCellValue(row.getCell(8))));
                     railway.setExclusive(Integer.parseInt(getCellValue(row.getCell(9))));
+                    railway.setFilo20D(Integer.parseInt(getCellValue(row.getCell(10))));
+                    railway.setFilo20HCD(Integer.parseInt(getCellValue(row.getCell(11))));
+                    railway.setFilo40D(Integer.parseInt(getCellValue(row.getCell(12))));
                     routes.add(route);
                 } else if (route instanceof RouteSea sea) {
                     sea.setCityFrom(getCellValue(row.getCell(0)));
@@ -178,6 +181,7 @@ public class ExcelServiceImpl implements ExcelService {
                     sea.setContainerTypeSize(getCellValue(row.getCell(7)));
                     sea.setFilo(Integer.parseInt(getCellValue(row.getCell(8))));
                     sea.setExclusive(Integer.parseInt(getCellValue(row.getCell(9))));
+                    sea.setFiloD(Integer.parseInt(getCellValue(row.getCell(10))));
                     routes.add(route);
                 } else if (route instanceof RouteAuto auto) {
                     auto.setCityFrom(getCellValue(row.getCell(0)));
@@ -199,6 +203,7 @@ public class ExcelServiceImpl implements ExcelService {
                     dropOff.setValidTo(getCellValue(row.getCell(3))); // Дата
                     dropOff.setFilo(Integer.parseInt(getCellValue(row.getCell(4)))); // FILO
                     dropOff.setSize(getCellValue(row.getCell(5))); // Размер
+                    dropOff.setFiloD(Integer.parseInt(getCellValue(row.getCell(6)))); // Filo dollar
                     routes.add(route);
                 } else if (route instanceof RentEntity rent) {
                     rent.setPol(getCellValue(row.getCell(0))); // Поле POL
@@ -207,6 +212,7 @@ public class ExcelServiceImpl implements ExcelService {
                     rent.setSize(getCellValue(row.getCell(3))); // Размер
                     rent.setValidTo(getCellValue(row.getCell(4))); // Дата
                     rent.setFilo(Integer.parseInt(getCellValue(row.getCell(5)))); // FILO
+                    rent.setFiloD(Integer.parseInt(getCellValue(row.getCell(6)))); // FILO dollar
                     routes.add(route);
                 }
             } catch (Exception e) {

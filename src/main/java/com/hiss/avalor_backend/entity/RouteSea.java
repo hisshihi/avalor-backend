@@ -22,6 +22,7 @@ public class RouteSea {
     private String eqpt;
     private String containerTypeSize;
     private Integer filo;
+    private Integer filoD;
     private Integer exclusive;
     private String cityFrom;
     private String cityTo;

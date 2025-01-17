@@ -26,6 +26,7 @@ public class DropOffEntity {
     private String carrier;
     private String validTo;
     private Integer filo;
+    private Integer filoD;
     private String size;
 
     @Override
@@ -53,6 +54,7 @@ public class DropOffEntity {
                 "carrier = " + carrier + ", " +
                 "validTo = " + validTo + ", " +
                 "filo = " + filo + ", " +
+                "filoD = " + filoD + ", " +
                 "size = " + size + ")";
     }
 
