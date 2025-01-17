@@ -25,7 +25,7 @@ public class StorageAtThePortOfArrivalEntity {
     private String toTenDays;
     private String fromElevenToTwentyOneDays;
     private String fromTwentyTwoToNinetyNineDays;
-    private String name;
+    private String name; // Порт
 
     // Цены
     private Integer priceToTenDays;

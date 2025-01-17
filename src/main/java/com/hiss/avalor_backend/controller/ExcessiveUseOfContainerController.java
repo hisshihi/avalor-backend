@@ -5,9 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hiss.avalor_backend.entity.ExcessiveUseOfContainerEntity;
 import com.hiss.avalor_backend.repo.ExcessiveUseOfContainerRepo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +26,12 @@ public class ExcessiveUseOfContainerController {
     @GetMapping
     public List<ExcessiveUseOfContainerEntity> getList() {
         return excessiveUseOfContainerRepo.findAll();
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_READ')")
+    @GetMapping("/carrier")
+    public List<ExcessiveUseOfContainerEntity> getCarrier(@RequestParam String carrier) {
+        return excessiveUseOfContainerRepo.findByCarrierName(carrier);
     }
 
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
