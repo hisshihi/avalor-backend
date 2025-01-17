@@ -21,6 +21,7 @@ configurations {
 
 repositories {
 	mavenCentral()
+	maven { url 'https://docx4java.github.io/mavenRepo/' } // Для docx4j, если требуется
 }
 
 dependencies {
@@ -33,6 +34,7 @@ dependencies {
 	implementation 'com.fasterxml.jackson.core:jackson-databind:2.18.2'
 	implementation 'org.springframework.boot:spring-boot-starter-hateoas'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.apache.poi:poi-ooxml:5.2.3'
 	implementation 'org.apache.poi:poi:5.2.3'       // Для работы с Excel в старом формате .xls
 	implementation 'org.apache.poi:poi-ooxml:5.2.3' // Для работы с форматом .xlsx
 	compileOnly 'org.projectlombok:lombok'

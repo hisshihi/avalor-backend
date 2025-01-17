@@ -23,19 +23,19 @@ public class ExcessiveUseOfContainerEntity {
     private Long id;
 
     String gettingStartedIssuanceFromSevenDays;
-    Double gettingStartedIssuanceFromSevenDaysPrice;
+    Integer gettingStartedIssuanceFromSevenDaysPrice;
     String gettingStartedIssuanceFromEightFromNinetyNineDays;
-    Double gettingStartedIssuanceFromEightFromNinetyNineDaysPrice;
+    Integer gettingStartedIssuanceFromEightFromNinetyNineDaysPrice;
 
     String gettingStartedUnloadingFromTenDays;
-    Double gettingStartedUnloadingFromTenDaysPrice;
+    Integer gettingStartedUnloadingFromTenDaysPrice;
     String gettingStartedUnloadingFromElevenFromNinetyNineDays;
-    Double gettingStartedUnloadingFromElevenFromNinetyNineDaysPrice;
+    Integer gettingStartedUnloadingFromElevenFromNinetyNineDaysPrice;
 
     String gettingStartedArrivalFromTenDays;
-    Double gettingStartedArrivalFromTenDaysPrice;
+    Integer gettingStartedArrivalFromTenDaysPrice;
     String gettingStartedArrivalFromElevenFromNinetyNineDays;
-    Double gettingStartedArrivalFromElevenFromNinetyNineDaysPrice;
+    Integer gettingStartedArrivalFromElevenFromNinetyNineDaysPrice;
 
     private String carrierName;
 
