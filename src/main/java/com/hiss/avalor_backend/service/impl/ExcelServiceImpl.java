@@ -1,11 +1,7 @@
 package com.hiss.avalor_backend.service.impl;
 
-import com.hiss.avalor_backend.entity.RouteAuto;
-import com.hiss.avalor_backend.entity.RouteRailway;
-import com.hiss.avalor_backend.entity.RouteSea;
-import com.hiss.avalor_backend.repo.RouteAutoRepository;
-import com.hiss.avalor_backend.repo.RouteRailwayRepository;
-import com.hiss.avalor_backend.repo.RouteSeaRepository;
+import com.hiss.avalor_backend.entity.*;
+import com.hiss.avalor_backend.repo.*;
 import com.hiss.avalor_backend.service.ExcelService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -16,6 +12,7 @@ import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -31,8 +28,11 @@ public class ExcelServiceImpl implements ExcelService {
     private final RouteRailwayRepository routeRailwayRepository;
     private final RouteSeaRepository routeSeaRepository;
     private final RouteAutoRepository routeAutoRepository;
+    private final DropOffRepository dropOffRepository;
+    private final RentRepository rentRepository;
 
     @Override
+    @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteRailwayFromExcel(XSSFWorkbook workbook, List<String> errors) {
         List<RouteRailway> routes = parseRailwayRoutes(workbook, errors);
@@ -52,6 +52,7 @@ public class ExcelServiceImpl implements ExcelService {
     }
 
     @Override
+    @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteSeaFromExcel(XSSFWorkbook workbook, List<String> errors) {
         List<RouteSea> routes = parseSeaRoutes(workbook, errors);
@@ -72,6 +73,7 @@ public class ExcelServiceImpl implements ExcelService {
     }
 
     @Override
+    @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteAutoFromExcel(XSSFWorkbook workbook, List<String> errors) {
         List<RouteAuto> routes = parseAutoRoutes(workbook, errors);
@@ -91,6 +93,36 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveDropOffFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<DropOffEntity> dropOffs = parseDropOffs(workbook, errors);
+        for (DropOffEntity dropOff : dropOffs) {
+            try {
+                dropOffRepository.save(dropOff);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving drop-off: %s", e.getMessage()));
+                log.error("Error saving drop-off", e);
+            }
+        }
+    }
+
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveRentFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<RentEntity> rents = parseRents(workbook, errors);
+        for (RentEntity rent : rents) {
+            try {
+                rentRepository.save(rent);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving rent: %s", e.getMessage()));
+                log.error("Error saving rent", e);
+            }
+        }
+    }
+
     private List<RouteRailway> parseRailwayRoutes(XSSFWorkbook workbook, List<String> errors) {
         return parseRoutes(workbook, errors, RouteRailway.class);
     }
@@ -101,6 +133,14 @@ public class ExcelServiceImpl implements ExcelService {
 
     private List<RouteAuto> parseAutoRoutes(XSSFWorkbook workbook, List<String> errors) {
         return parseRoutes(workbook, errors, RouteAuto.class);
+    }
+
+    private List<DropOffEntity> parseDropOffs(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, DropOffEntity.class);
+    }
+
+    private List<RentEntity> parseRents(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, RentEntity.class);
     }
 
     private <T> List<T> parseRoutes(XSSFWorkbook workbook, List<String> errors, Class<T> routeClass) {
@@ -151,6 +191,22 @@ public class ExcelServiceImpl implements ExcelService {
                     auto.setFilo20HC(Integer.parseInt(getCellValue(row.getCell(7))));
                     auto.setFilo40(Integer.parseInt(getCellValue(row.getCell(8))));
                     auto.setExclusive(Integer.parseInt(getCellValue(row.getCell(9))));
+                    routes.add(route);
+                } else if (route instanceof DropOffEntity dropOff) {
+                    dropOff.setPol(getCellValue(row.getCell(0))); // Поле POL
+                    dropOff.setPod(getCellValue(row.getCell(1))); // Поле POD
+                    dropOff.setCarrier(getCellValue(row.getCell(2))); // Перевозчик
+                    dropOff.setValidTo(getCellValue(row.getCell(3))); // Дата
+                    dropOff.setFilo(Integer.parseInt(getCellValue(row.getCell(4)))); // FILO
+                    dropOff.setSize(getCellValue(row.getCell(5))); // Размер
+                    routes.add(route);
+                } else if (route instanceof RentEntity rent) {
+                    rent.setPol(getCellValue(row.getCell(0))); // Поле POL
+                    rent.setPod(getCellValue(row.getCell(1))); // Поле POD
+                    rent.setCarrier(getCellValue(row.getCell(2))); // Перевозчик
+                    rent.setSize(getCellValue(row.getCell(3))); // Размер
+                    rent.setValidTo(getCellValue(row.getCell(4))); // Дата
+                    rent.setFilo(Integer.parseInt(getCellValue(row.getCell(5)))); // FILO
                     routes.add(route);
                 }
             } catch (Exception e) {

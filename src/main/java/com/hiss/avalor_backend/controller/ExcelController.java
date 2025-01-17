@@ -43,6 +43,18 @@ public class ExcelController {
         return handleExcelUpload(file, excelService::saveRouteAutoFromExcel);
     }
 
+    @PreAuthorize("hasAnyAuthority('SCOPE_WRITE')")
+    @PostMapping("/drop-off")
+    public ResponseEntity<?> uploadDropOffExcel(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveDropOffFromExcel);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SCOPE_WRITE')")
+    @PostMapping("/rent")
+    public ResponseEntity<?> uploadRentExcel(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveRentFromExcel);
+    }
+
     private ResponseEntity<?> handleExcelUpload(MultipartFile file, BiConsumer<XSSFWorkbook, List<String>> serviceMethod) {
         try (InputStream inputStream = file.getInputStream();
              XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
