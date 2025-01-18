@@ -16,6 +16,8 @@ import org.springframework.web.server.ResponseStatusException;
 import java.io.IOException;
 import java.util.Optional;
 
+// TODO: добавить хеширование для жд, моря, авто, аренды и дроп
+
 @RestController
 @RequestMapping("/api/route-railway")
 @RequiredArgsConstructor

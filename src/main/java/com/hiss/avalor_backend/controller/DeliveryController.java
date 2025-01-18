@@ -110,12 +110,13 @@ public class DeliveryController {
             for (Route findRoute : routeWithCost.getRoute()) {
                 switch (transportType) {
                     case "ЖД":
-                        RouteRailway routeRailway = routeRailwayRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40(
+                        RouteRailway routeRailway = routeRailwayRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrier(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
                                 findRoute.getFilo20(),
                                 findRoute.getFilo20HC(),
-                                findRoute.getFilo40()
+                                findRoute.getFilo40(),
+                                findRoute.getCarrier()
                         );
                         if (routeRailway != null) {
                             routeIds.add(routeRailway.getId());
@@ -123,12 +124,13 @@ public class DeliveryController {
                         break;
 
                     case "Авто":
-                        RouteAuto routeAuto = routeAutoRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40(
+                        RouteAuto routeAuto = routeAutoRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrier(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
                                 findRoute.getFilo20(),
                                 findRoute.getFilo20HC(),
-                                findRoute.getFilo40()
+                                findRoute.getFilo40(),
+                                findRoute.getCarrier()
                         );
                         if (routeAuto != null) {
                             routeIds.add(routeAuto.getId());
@@ -136,10 +138,11 @@ public class DeliveryController {
                         break;
 
                     case "Море":
-                        RouteSea routeSea = routeSeaRepository.findByPolAndPodAndEqpt(
+                        RouteSea routeSea = routeSeaRepository.findByPolAndPodAndEqptAndCarrier(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
-                                findRoute.getEqpt()
+                                findRoute.getEqpt(),
+                                findRoute.getCarrier()
                         );
                         if (routeSea != null) {
                             routeIds.add(routeSea.getId());
