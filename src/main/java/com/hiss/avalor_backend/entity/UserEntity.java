@@ -24,6 +24,8 @@ public class UserEntity {
     private String username;
     private String password;
     private String roles;
+    private String fullName;
+    private String phoneNumber;
     private boolean emailIsVerification = false;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

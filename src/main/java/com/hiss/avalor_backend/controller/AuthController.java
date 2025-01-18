@@ -50,7 +50,6 @@ public class AuthController {
         return ResponseEntity.ok(authService.getAccessTokenUsingRefreshToken(authorizationHeader));
     }
 
-    // TODO: сделать отправку адреса страницы вместе с токеном
     @PostMapping("/sign-up")
     public ResponseEntity<?> registerUser(@Valid @RequestBody UserRegistrationDto userRegistrationDto,
                                           BindingResult bindingResult, HttpServletResponse httpServletResponse){

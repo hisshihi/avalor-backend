@@ -11,7 +11,12 @@ public record UserRegistrationDto (
 //        String userEmail,
 
         @NotEmpty(message = "User password must not be empty")
-        String userPassword
+        String userPassword,
 //        @NotEmpty(message = "User role must not be empty")
 //        String userRole
+
+        @NotEmpty(message = "Full name must not be empty")
+        String fullName,
+        @NotEmpty(message = "Phone number must not be empty")
+        String phoneNumber
 ){ }

@@ -129,6 +129,8 @@ public class AuthServiceImpl implements AuthService {
             UserEntity userDetailsEntity = userMapper.convertToEntity(userRegistrationDto);
             userDetailsEntity.setRoles("ROLE_UNVERIFIED");
             userDetailsEntity.setEmailIsVerification(false);
+            userDetailsEntity.setFullName(userRegistrationDto.fullName());
+            userDetailsEntity.setPhoneNumber(userRegistrationDto.phoneNumber());
             UserEntity savedUserDetails = userRepo.save(userDetailsEntity);
 
             Authentication authentication = createAuthenticationObject(userDetailsEntity);
