@@ -4,7 +4,7 @@ import com.hiss.avalor_backend.dto.DocumentContactDto;
 import com.hiss.avalor_backend.service.DocumentService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -17,10 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.util.UriUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 
 @RestController
 @RequestMapping("/api/document")
@@ -82,23 +80,27 @@ public class DocumentController {
 //        }
 //    }
 
-    // TODO: убрать локальное сохранение
     @PreAuthorize("hasAnyAuthority('SCOPE_READ')")
     @GetMapping
     public ResponseEntity<Resource> generateDocument(@RequestBody DocumentContactDto contactDto) {
         log.info(contactDto.toString());
         try {
             byte[] documentData = documentService.fillTemplateAndSendToFont(contactDto);
-            String uploadDir = "src/main/resources/templates/"; // Настроить путь для сохранения файлов
-            String filename = "Заполненный_договор_" + System.currentTimeMillis() + ".docx";
-            File file = new File(uploadDir, filename);
-            Files.write(file.toPath(), documentData);
+//            String uploadDir = "src/main/resources/templates/"; // Настроить путь для сохранения файлов
+//            String filename = "Заполненный_договор_" + System.currentTimeMillis() + ".docx";
+//            File file = new File(uploadDir, filename);
+//            Files.write(file.toPath(), documentData);
 
-            Resource fileResource = new FileSystemResource(file);
+            // Создание ресурса на основе байтового массива
+            ByteArrayResource resource = new ByteArrayResource(documentData);
+
+            String filename = "Заполненный_договор_" + System.currentTimeMillis() + ".docx";
+
+//            Resource fileResource = new FileSystemResource(file);
             return ResponseEntity.ok()
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + UriUtils.encode(filename, StandardCharsets.UTF_8))
                     .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                    .body(fileResource);
+                    .body(resource);
         } catch (IOException e) {
             log.error("Ошибка при генерации документа", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();

@@ -26,7 +26,7 @@ public class EmailServiceImpl implements EmailService {
 
             helper.setTo(username);
             helper.setSubject("Подтверждение регистрации");
-            helper.setText("Перейдите по ссылке для подтверждения вашей почты: " + verificationLink, true);
+            helper.setText("Ваш код подтвеждения: " + verificationLink, true);
             helper.setFrom("avalog.auth@gmail.com");
 
             mailSender.send(mimeMessage);

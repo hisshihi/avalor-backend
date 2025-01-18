@@ -133,6 +133,7 @@ public class AuthServiceImpl implements AuthService {
 
             Authentication authentication = createAuthenticationObject(userDetailsEntity);
 
+            // TODO: поменять токен на рандомные 4-6 цифр
             // Generate validate token
             String token = UUID.randomUUID().toString();
             VerificationToken verificationToken = new VerificationToken();
@@ -141,9 +142,8 @@ public class AuthServiceImpl implements AuthService {
             verificationToken.setExpiryDate(LocalDateTime.now().plusHours(24));
             verificationTokenRepo.save(verificationToken);
 
-            // TODO: добавить асинхронную работу к отправке почты
             // Отправка письма
-            String verificationLink = "https://avalog-calculator.onrender.com/api/auth/verify-email?token=" + token;
+            String verificationLink = token;
             emailService.sendVerificationEmail(userRegistrationDto.username(), verificationLink);
 
             // Generate a JWT token

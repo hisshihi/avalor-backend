@@ -22,21 +22,6 @@ public class ExcessiveUseOfContainerEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    String gettingStartedIssuanceFromSevenDays;
-    Integer gettingStartedIssuanceFromSevenDaysPrice;
-    String gettingStartedIssuanceFromEightFromNinetyNineDays;
-    Integer gettingStartedIssuanceFromEightFromNinetyNineDaysPrice;
-
-    String gettingStartedUnloadingFromTenDays;
-    Integer gettingStartedUnloadingFromTenDaysPrice;
-    String gettingStartedUnloadingFromElevenFromNinetyNineDays;
-    Integer gettingStartedUnloadingFromElevenFromNinetyNineDaysPrice;
-
-    String gettingStartedArrivalFromTenDays;
-    Integer gettingStartedArrivalFromTenDaysPrice;
-    String gettingStartedArrivalFromElevenFromNinetyNineDays;
-    Integer gettingStartedArrivalFromElevenFromNinetyNineDaysPrice;
-
     private String carrierName;
 
     @Override
