@@ -2,6 +2,7 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.*;
+import com.hiss.avalor_backend.service.CitiesService;
 import com.hiss.avalor_backend.service.ExcelService;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -30,6 +31,7 @@ public class ExcelServiceImpl implements ExcelService {
     private final RouteAutoRepository routeAutoRepository;
     private final DropOffRepository dropOffRepository;
     private final RentRepository rentRepository;
+    private final CitiesService citiesService;
 
     @Override
     @Async("asyncTaskExecutor")
@@ -169,6 +171,7 @@ public class ExcelServiceImpl implements ExcelService {
                     railway.setFilo20HCD(Integer.parseInt(getCellValue(row.getCell(11))));
                     railway.setFilo40D(Integer.parseInt(getCellValue(row.getCell(12))));
                     routes.add(route);
+                    saveUniqueCities(railway.getCityFrom(), railway.getCityTo());
                 } else if (route instanceof RouteSea sea) {
                     sea.setCityFrom(getCellValue(row.getCell(0)));
                     sea.setCityTo(getCellValue(row.getCell(1)));
@@ -183,6 +186,8 @@ public class ExcelServiceImpl implements ExcelService {
                     sea.setExclusive(Integer.parseInt(getCellValue(row.getCell(9))));
                     sea.setFiloD(Integer.parseInt(getCellValue(row.getCell(10))));
                     routes.add(route);
+
+                    saveUniqueCities(sea.getCityFrom(), sea.getCityTo());
                 } else if (route instanceof RouteAuto auto) {
                     auto.setCityFrom(getCellValue(row.getCell(0)));
                     auto.setCityTo(getCellValue(row.getCell(1)));
@@ -196,6 +201,8 @@ public class ExcelServiceImpl implements ExcelService {
                     auto.setFilo40(Integer.parseInt(getCellValue(row.getCell(8))));
                     auto.setExclusive(Integer.parseInt(getCellValue(row.getCell(9))));
                     routes.add(route);
+
+                    saveUniqueCities(auto.getCityFrom(), auto.getCityTo());
                 } else if (route instanceof DropOffEntity dropOff) {
                     dropOff.setPol(getCellValue(row.getCell(0))); // Поле POL
                     dropOff.setPod(getCellValue(row.getCell(1))); // Поле POD
@@ -255,6 +262,24 @@ public class ExcelServiceImpl implements ExcelService {
                 return String.valueOf(cell.getBooleanCellValue());
             default:
                 return null;
+        }
+    }
+
+    private void saveUniqueCities(String cityFrom, String cityTo) {
+        // Проверяем, существуют ли города
+        boolean cityFromExists = citiesService.existsByCity(cityFrom);
+        boolean cityToExists = citiesService.existsByCity(cityTo);
+
+        // Сохраняем только те города, которые ещё не существуют
+        if (!cityFromExists) {
+            Cities newCityFrom = new Cities();
+            newCityFrom.setCity(cityFrom);
+            citiesService.save(newCityFrom);
+        }
+        if (!cityToExists) {
+            Cities newCityTo = new Cities();
+            newCityTo.setCity(cityTo);
+            citiesService.save(newCityTo);
         }
     }
 
