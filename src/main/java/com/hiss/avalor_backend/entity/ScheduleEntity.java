@@ -11,22 +11,23 @@ import java.util.Objects;
 
 @AllArgsConstructor
 @NoArgsConstructor
+@Builder
 @Getter
 @Setter
-@Builder
 @ToString
 @Entity
-public class ExcessiveUseOfContainerEntity {
+public class ScheduleEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String date;
-    private String condition;
-    private String randomText;
-    private String amount;
-    private String carrierName;
+    private String pol;
+    private String pod;
+    private String dateFrom;
+    private String dateTo;
+    private String carrier;
+    private String nameOfTheVessel;
 
     @Override
     public final boolean equals(Object o) {
@@ -35,7 +36,7 @@ public class ExcessiveUseOfContainerEntity {
         Class<?> oEffectiveClass = o instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        ExcessiveUseOfContainerEntity that = (ExcessiveUseOfContainerEntity) o;
+        ScheduleEntity that = (ScheduleEntity) o;
         return getId() != null && Objects.equals(getId(), that.getId());
     }
 

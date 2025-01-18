@@ -32,6 +32,10 @@ public class ExcelServiceImpl implements ExcelService {
     private final DropOffRepository dropOffRepository;
     private final RentRepository rentRepository;
     private final CitiesService citiesService;
+    private final StorageAtThePortOfArrivalRepo storageAtThePortOfArrivalRepo;
+    private final ExcessiveUseOfContainerRepo excessiveUseOfContainerRepo;
+    private final AdditionalServiceAtThePortOfArrivalPortRepo additionalServiceAtThePortOfArrivalPortRepo;
+    private final ScheduleRepo scheduleRepo;
 
     @Override
     @Async("asyncTaskExecutor")
@@ -125,6 +129,66 @@ public class ExcelServiceImpl implements ExcelService {
         }
     }
 
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveStorageFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<StorageAtThePortOfArrivalEntity> storages = parseStorage(workbook, errors);
+        for (StorageAtThePortOfArrivalEntity storage : storages) {
+            try {
+                storageAtThePortOfArrivalRepo.save(storage);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving rent: %s", e.getMessage()));
+                log.error("Error saving rent", e);
+            }
+        }
+    }
+
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveExcessiveFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<ExcessiveUseOfContainerEntity> excessiveUseOfContainerEntities = parseExcessive(workbook, errors);
+        for (ExcessiveUseOfContainerEntity excessiveUseOfContainerEntity : excessiveUseOfContainerEntities) {
+            try {
+                excessiveUseOfContainerRepo.save(excessiveUseOfContainerEntity);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving rent: %s", e.getMessage()));
+                log.error("Error saving rent", e);
+            }
+        }
+    }
+
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveAdditionalServiceAtThePortFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        List<AdditionalServiceAtThePortOfArrivalPort> additionalServiceAtThePortOfArrivalPorts = parseAdditionalService(workbook, errors);
+        for (AdditionalServiceAtThePortOfArrivalPort additionalServiceAtThePortOfArrivalPort : additionalServiceAtThePortOfArrivalPorts) {
+            try {
+                additionalServiceAtThePortOfArrivalPortRepo.save(additionalServiceAtThePortOfArrivalPort);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving rent: %s", e.getMessage()));
+                log.error("Error saving rent", e);
+            }
+        }
+    }
+
+    @Override
+    @Async("asyncTaskExecutor")
+    @SneakyThrows
+    public void saveSchedule(XSSFWorkbook workbook, List<String> errors) {
+        List<ScheduleEntity> scheduleEntities = parseSchedule(workbook, errors);
+        for (ScheduleEntity scheduleEntity : scheduleEntities) {
+            try {
+                scheduleRepo.save(scheduleEntity);
+            } catch (Exception e) {
+                errors.add(String.format("Error saving schedule: %s", e.getMessage()));
+                log.error("Error saving schedule", e);
+            }
+        }
+    }
+
     private List<RouteRailway> parseRailwayRoutes(XSSFWorkbook workbook, List<String> errors) {
         return parseRoutes(workbook, errors, RouteRailway.class);
     }
@@ -143,6 +207,22 @@ public class ExcelServiceImpl implements ExcelService {
 
     private List<RentEntity> parseRents(XSSFWorkbook workbook, List<String> errors) {
         return parseRoutes(workbook, errors, RentEntity.class);
+    }
+
+    private List<StorageAtThePortOfArrivalEntity> parseStorage(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, StorageAtThePortOfArrivalEntity.class);
+    }
+
+    private List<ExcessiveUseOfContainerEntity> parseExcessive(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, ExcessiveUseOfContainerEntity.class);
+    }
+
+    private List<AdditionalServiceAtThePortOfArrivalPort> parseAdditionalService(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, AdditionalServiceAtThePortOfArrivalPort.class);
+    }
+
+    private List<ScheduleEntity> parseSchedule(XSSFWorkbook workbook, List<String> errors) {
+        return parseRoutes(workbook, errors, ScheduleEntity.class);
     }
 
     private <T> List<T> parseRoutes(XSSFWorkbook workbook, List<String> errors, Class<T> routeClass) {
@@ -220,6 +300,33 @@ public class ExcelServiceImpl implements ExcelService {
                     rent.setValidTo(getCellValue(row.getCell(4))); // Дата
                     rent.setFilo(Integer.parseInt(getCellValue(row.getCell(5)))); // FILO
                     rent.setFiloD(Integer.parseInt(getCellValue(row.getCell(6)))); // FILO dollar
+                    routes.add(route);
+                } else if (route instanceof StorageAtThePortOfArrivalEntity storage) {
+                    storage.setPort(getCellValue(row.getCell(0)));
+                    storage.setDate(getCellValue(row.getCell(1)));
+                    storage.setAmount(getCellValue(row.getCell(2)));
+                    storage.setCondition(getCellValue(row.getCell(3)));
+                    storage.setRandomText(getCellValue(row.getCell(4)));
+                    routes.add(route);
+                } else if (route instanceof ExcessiveUseOfContainerEntity excessiveUse) {
+                    excessiveUse.setAmount(getCellValue(row.getCell(0)));
+                    excessiveUse.setDate(getCellValue(row.getCell(1)));
+                    excessiveUse.setCondition(getCellValue(row.getCell(2)));
+                    excessiveUse.setRandomText(getCellValue(row.getCell(3)));
+                    excessiveUse.setCarrierName(getCellValue(row.getCell(4)));
+                    routes.add(route);
+                } else if (route instanceof AdditionalServiceAtThePortOfArrivalPort additionalService) {
+                    additionalService.setPort(getCellValue(row.getCell(0)));
+                    additionalService.setCondition(getCellValue(row.getCell(1)));
+                    additionalService.setAmount(getCellValue(row.getCell(2)));
+                    routes.add(route);
+                } else if (route instanceof ScheduleEntity schedule) {
+                    schedule.setPol(getCellValue(row.getCell(0)));
+                    schedule.setPod(getCellValue(row.getCell(1)));
+                    schedule.setDateFrom(getCellValue(row.getCell(2)));
+                    schedule.setDateTo(getCellValue(row.getCell(3)));
+                    schedule.setCarrier(getCellValue(row.getCell(4)));
+                    schedule.setNameOfTheVessel(getCellValue(row.getCell(5)));
                     routes.add(route);
                 }
             } catch (Exception e) {

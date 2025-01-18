@@ -28,6 +28,12 @@ public class StorageAtThePortOfArrivalController {
         return storageAtThePortOfArrivalRepo.findAll();
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_READ')")
+    @GetMapping("/port")
+    public List<StorageAtThePortOfArrivalEntity> getPort(@RequestParam String port) {
+        return storageAtThePortOfArrivalRepo.findByPort(port);
+    }
+
     @PreAuthorize("hasAuthority('SCOPE_WRITE')")
     @PostMapping
     public StorageAtThePortOfArrivalEntity create(@RequestBody StorageAtThePortOfArrivalEntity storageAtThePortOfArrivalEntity) {

@@ -22,15 +22,11 @@ public class StorageAtThePortOfArrivalEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String toTenDays;
-    private String fromElevenToTwentyOneDays;
-    private String fromTwentyTwoToNinetyNineDays;
-    private String name; // Порт
-
-    // Цены
-    private Integer priceToTenDays;
-    private Integer priceFromElevenToTwentyOneDays;
-    private Integer priceFromTwentyTwoToNinetyNineDays;
+    private String port;
+    private String date;
+    private String condition;
+    private String randomText;
+    private String amount;
 
     @Override
     public final boolean equals(Object o) {
@@ -47,4 +43,7 @@ public class StorageAtThePortOfArrivalEntity {
     public final int hashCode() {
         return this instanceof HibernateProxy proxy ? proxy.getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
+
+
+
 }

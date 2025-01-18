@@ -55,6 +55,30 @@ public class ExcelController {
         return handleExcelUpload(file, excelService::saveRentFromExcel);
     }
 
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PostMapping("/excessive")
+    public ResponseEntity<?> uploadExcessiveExcel(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveExcessiveFromExcel);
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PostMapping("/storage")
+    public ResponseEntity<?> uploadStorage(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveStorageFromExcel);
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PostMapping("/additional")
+    public ResponseEntity<?> uploadAdditionalExcel(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveAdditionalServiceAtThePortFromExcel);
+    }
+
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @PostMapping("/schedule")
+    public ResponseEntity<?> uploadScheduleExcel(@RequestParam("file") MultipartFile file) {
+        return handleExcelUpload(file, excelService::saveSchedule);
+    }
+
     private ResponseEntity<?> handleExcelUpload(MultipartFile file, BiConsumer<XSSFWorkbook, List<String>> serviceMethod) {
         try (InputStream inputStream = file.getInputStream();
              XSSFWorkbook workbook = new XSSFWorkbook(inputStream)) {
