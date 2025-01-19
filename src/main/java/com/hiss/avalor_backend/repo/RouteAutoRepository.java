@@ -8,5 +8,5 @@ import org.springframework.stereotype.Repository;
 public interface RouteAutoRepository extends JpaRepository<RouteAuto, Long> {
 //    Optional<RouteAuto> findById(Long id);
 
-    RouteAuto findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrier(String pol, String pod, Integer filo20, Integer filo20HC, Integer filo40, String carrier);
+    RouteAuto findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrierAndContainerTypeSizeAndValidTo(String pol, String pod, Integer filo20, Integer filo20HC, Integer filo40, String carrier, String containerTypeSize, String validTo);
 }

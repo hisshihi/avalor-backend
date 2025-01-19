@@ -110,13 +110,15 @@ public class DeliveryController {
             for (Route findRoute : routeWithCost.getRoute()) {
                 switch (transportType) {
                     case "ЖД":
-                        RouteRailway routeRailway = routeRailwayRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrier(
+                        RouteRailway routeRailway = routeRailwayRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrierAndContainerTypeSizeAndValidTo(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
                                 findRoute.getFilo20(),
                                 findRoute.getFilo20HC(),
                                 findRoute.getFilo40(),
-                                findRoute.getCarrier()
+                                findRoute.getCarrier(),
+                                findRoute.getContainerTypeSize(),
+                                findRoute.getValidTo()
                         );
                         if (routeRailway != null) {
                             routeIds.add(routeRailway.getId());
@@ -124,13 +126,15 @@ public class DeliveryController {
                         break;
 
                     case "Авто":
-                        RouteAuto routeAuto = routeAutoRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrier(
+                        RouteAuto routeAuto = routeAutoRepository.findByPolAndPodAndFilo20AndFilo20HCAndFilo40AndCarrierAndContainerTypeSizeAndValidTo(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
                                 findRoute.getFilo20(),
                                 findRoute.getFilo20HC(),
                                 findRoute.getFilo40(),
-                                findRoute.getCarrier()
+                                findRoute.getCarrier(),
+                                findRoute.getContainerTypeSize(),
+                                findRoute.getValidTo()
                         );
                         if (routeAuto != null) {
                             routeIds.add(routeAuto.getId());
@@ -138,11 +142,14 @@ public class DeliveryController {
                         break;
 
                     case "Море":
-                        RouteSea routeSea = routeSeaRepository.findByPolAndPodAndEqptAndCarrier(
+                        RouteSea routeSea = routeSeaRepository.findByPolAndPodAndEqptAndCarrierAndContainerTypeSizeAndValidToAndFilo(
                                 findRoute.getPol(),
                                 findRoute.getPod(),
                                 findRoute.getEqpt(),
-                                findRoute.getCarrier()
+                                findRoute.getCarrier(),
+                                findRoute.getContainerTypeSize(),
+                                findRoute.getValidTo(),
+                                findRoute.getFilo()
                         );
                         if (routeSea != null) {
                             routeIds.add(routeSea.getId());

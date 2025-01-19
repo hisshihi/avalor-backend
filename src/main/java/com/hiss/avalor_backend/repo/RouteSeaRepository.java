@@ -16,7 +16,7 @@ public interface RouteSeaRepository extends JpaRepository<RouteSea, Long> {
 
     List<RouteSea> findAllByCityToContainingIgnoreCase(String city);
 
-    RouteSea findByPolAndPodAndEqptAndCarrier(String pol, String pod, String eqpt, String carrier);
+    RouteSea findByPolAndPodAndEqptAndCarrierAndContainerTypeSizeAndValidToAndFilo(String pol, String pod, String eqpt, String carrier, String containerTypeSize, String validTo, Integer vilo);
 
 //    Optional<RouteSea> findById(Long id);
 }
