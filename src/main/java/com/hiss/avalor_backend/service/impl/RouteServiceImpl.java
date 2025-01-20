@@ -397,7 +397,7 @@ public class RouteServiceImpl implements RouteService {
      */
     private List<RouteWithCost> convertToRouteWithCosts(List<Route> path) {
         RentEntity rentEntity = null;
-        DropOffEntity dropOffEntity = null;
+        List<DropOffEntity> dropOffEntity = new ArrayList<>();
 
         boolean hasSea = path.stream().anyMatch(route -> "Море".equals(route.getTransportType()));
 
@@ -471,7 +471,7 @@ public class RouteServiceImpl implements RouteService {
         }
 
         final RentEntity finalRentEntity = rentEntity;
-        final DropOffEntity finalDropOffEntity = dropOffEntity;
+        final List<DropOffEntity> finalDropOffEntity = dropOffEntity;
 
         int totalCost = path.stream().mapToInt(route -> calculateSegmentCost(route, finalRentEntity, finalDropOffEntity)).sum();
 
@@ -531,26 +531,26 @@ public class RouteServiceImpl implements RouteService {
 //
 //    }
 
-    private DropOffEntity getDropOffEntity(List<Route> routes) {
-        for (Route route : routes) {
-            log.info("route with getDropOffEntity: {}", route);
-            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
-                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
-                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-                log.info("Drop off entity: {}", dropOffEntity);
-
-                if (dropOffEntity != null) {
-                    log.info("Найден dropOffEntity: {}", dropOffEntity);
-                    return dropOffEntity;
-                } else {
-                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
-                    return null;
-                }
-            }
-        }
-        log.warn("Морской маршрут с COC не найден в этом пути.");
-        return null;
-    }
+//    private DropOffEntity getDropOffEntity(List<Route> routes) {
+//        for (Route route : routes) {
+//            log.info("route with getDropOffEntity: {}", route);
+//            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
+//                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
+//                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+//                log.info("Drop off entity: {}", dropOffEntity);
+//
+//                if (dropOffEntity != null) {
+//                    log.info("Найден dropOffEntity: {}", dropOffEntity);
+//                    return dropOffEntity;
+//                } else {
+//                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
+//                    return null;
+//                }
+//            }
+//        }
+//        log.warn("Морской маршрут с COC не найден в этом пути.");
+//        return null;
+//    }
 
     private String determinePolForCity(String city) {
         // 1. Попробуем найти прямой маршрут, начинающийся в этом городе:
@@ -601,7 +601,7 @@ public class RouteServiceImpl implements RouteService {
     /**
      * Расчет стоимости сегмента маршрута.
      */
-    private int calculateSegmentCost(Route route, final RentEntity rentEntity, final DropOffEntity dropOffEntity) {
+    private int calculateSegmentCost(Route route, final RentEntity rentEntity, final List<DropOffEntity> dropOffEntity) {
 
         int routeCost = 0;
         log.trace("Начальная стоимость маршрута: {} -> {} = {}.",
@@ -612,8 +612,10 @@ public class RouteServiceImpl implements RouteService {
             log.info("Добавлена стоимость аренды контейнера: {}.", rentEntity.getFilo());
 
         } else if ("COC".equals(route.getContainerTypeSize()) && "Море".equals(route.getTransportType())  && dropOffEntity != null) {
-            routeCost += dropOffEntity.getFilo();
-            log.info("Добавлена стоимость drop off: {}.", dropOffEntity.getFilo());
+            for (DropOffEntity dropOff : dropOffEntity) {
+                routeCost += dropOff.getFilo();
+                log.info("Добавлена стоимость drop off: {}.", dropOff.getFilo());
+            }
         }
 
 //        int handlingCost = getHandlingCost(route);
@@ -640,15 +642,15 @@ public class RouteServiceImpl implements RouteService {
     /*
     * Расчёт стоимости drop off
     * */
-    private int getContainerDropOffCost(Route route) {
-        if (dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
-            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-            log.info("Стоимость drop off для маршрута {} -> {}: {}",
-                    route.getPol(), route.getPod(), dropOffEntityCost.getFilo());
-            return dropOffEntityCost.getFilo();
-        }
-        return 0;
-    }
+//    private int getContainerDropOffCost(Route route) {
+//        if (dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
+//            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+//            log.info("Стоимость drop off для маршрута {} -> {}: {}",
+//                    route.getPol(), route.getPod(), dropOffEntityCost.getFilo());
+//            return dropOffEntityCost.getFilo();
+//        }
+//        return 0;
+//    }
 
     /**
      * Расчет стоимости обработки груза.
