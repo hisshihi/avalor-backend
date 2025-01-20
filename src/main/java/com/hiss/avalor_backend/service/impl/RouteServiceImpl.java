@@ -509,7 +509,9 @@ public class RouteServiceImpl implements RouteService {
         // Конечный город всего маршрута
         String endCity = path.get(path.size() - 1).getCityTo(); // Последний город в пути
 
-        return rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startCity, endCity, seaRoute.getEqpt(), seaRoute.getCarrier(), seaRoute.getValidTo());
+        return rentRepository.findFirstByPolAndPodAndSizeAndValidToAndCarrierNot(
+                startCity, endCity, seaRoute.getEqpt(), seaRoute.getValidTo(), seaRoute.getCarrier()
+        );
     }
 
     // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
