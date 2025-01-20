@@ -2,6 +2,7 @@ package com.hiss.avalor_backend.service.impl;
 
 import com.hiss.avalor_backend.entity.*;
 import com.hiss.avalor_backend.repo.*;
+import com.hiss.avalor_backend.service.CacheService;
 import com.hiss.avalor_backend.service.CitiesService;
 import com.hiss.avalor_backend.service.ExcelService;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +37,13 @@ public class ExcelServiceImpl implements ExcelService {
     private final ExcessiveUseOfContainerRepo excessiveUseOfContainerRepo;
     private final AdditionalServiceAtThePortOfArrivalPortRepo additionalServiceAtThePortOfArrivalPortRepo;
     private final ScheduleRepo scheduleRepo;
+    private final CacheService cacheService;
 
     @Override
     @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteRailwayFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        clearCache();
         List<RouteRailway> routes = parseRailwayRoutes(workbook, errors);
         for (int i = 0; i < routes.size(); i++) {
             RouteRailway route = routes.get(i);
@@ -61,6 +64,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteSeaFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        clearCache();
         List<RouteSea> routes = parseSeaRoutes(workbook, errors);
 
         for (int i = 0; i < routes.size(); i++) {
@@ -82,6 +86,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRouteAutoFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        clearCache();
         List<RouteAuto> routes = parseAutoRoutes(workbook, errors);
 
         for (int i = 0; i < routes.size(); i++) {
@@ -103,6 +108,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveDropOffFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        clearCache();
         List<DropOffEntity> dropOffs = parseDropOffs(workbook, errors);
         for (DropOffEntity dropOff : dropOffs) {
             try {
@@ -118,6 +124,7 @@ public class ExcelServiceImpl implements ExcelService {
     @Async("asyncTaskExecutor")
     @SneakyThrows
     public void saveRentFromExcel(XSSFWorkbook workbook, List<String> errors) {
+        clearCache();
         List<RentEntity> rents = parseRents(workbook, errors);
         for (RentEntity rent : rents) {
             try {
@@ -388,6 +395,10 @@ public class ExcelServiceImpl implements ExcelService {
             newCityTo.setCity(cityTo);
             citiesService.save(newCityTo);
         }
+    }
+
+    private void clearCache() {
+        cacheService.refreshCacheRoute();
     }
 
 }
