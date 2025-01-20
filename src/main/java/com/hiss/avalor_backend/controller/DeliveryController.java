@@ -166,36 +166,36 @@ public class DeliveryController {
 
 
     //  Вспомогательные методы для получения RentEntity и DropOffEntity (в контроллере)
-    private RentEntity getRentEntity(List<Route> routes) {
-        for (Route route : routes) {
-            if (route.getContainerTypeSize().equals("SOC")) {
-                String startPol = route.getPol();
-                String endPod = route.getPod();
-                return rentRepository.findByPolAndPodAndSize(startPol, endPod, route.getEqpt());
-            }
-        }
-        return null; // Возвращаем null, если RentEntity не применима
-    }
+//    private RentEntity getRentEntity(List<Route> routes) {
+//        for (Route route : routes) {
+//            if (route.getContainerTypeSize().equals("SOC")) {
+//                String startPol = route.getPol();
+//                String endPod = route.getPod();
+//                return rentRepository.findByPolAndPodAndSizeAndCarrier(startPol, endPod, route.getEqpt());
+//            }
+//        }
+//        return null; // Возвращаем null, если RentEntity не применима
+//    }
 
 
-    private DropOffEntity getDropOffEntity(List<Route> routes) {
-        for (Route route : routes) {
-            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
-                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
-                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-
-                if (dropOffEntity != null) {
-                    log.info("Найден dropOffEntity: {}", dropOffEntity);
-                    return dropOffEntity;
-                } else {
-                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
-                    return null;
-                }
-            }
-        }
-        log.warn("Морской маршрут с COC не найден в этом пути.");
-        return null;
-    }
+//    private DropOffEntity getDropOffEntity(List<Route> routes) {
+//        for (Route route : routes) {
+//            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
+//                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
+//                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
+//
+//                if (dropOffEntity != null) {
+//                    log.info("Найден dropOffEntity: {}", dropOffEntity);
+//                    return dropOffEntity;
+//                } else {
+//                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
+//                    return null;
+//                }
+//            }
+//        }
+//        log.warn("Морской маршрут с COC не найден в этом пути.");
+//        return null;
+//    }
 
 //    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
 //    @PostMapping("/calculate")

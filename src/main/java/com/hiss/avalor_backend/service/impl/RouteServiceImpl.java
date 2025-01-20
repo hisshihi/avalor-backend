@@ -509,27 +509,27 @@ public class RouteServiceImpl implements RouteService {
         // Конечный город всего маршрута
         String endCity = path.get(path.size() - 1).getCityTo(); // Последний город в пути
 
-        return rentRepository.findByPolAndPodAndSize(startCity, endCity, seaRoute.getEqpt());
+        return rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startCity, endCity, seaRoute.getEqpt(), seaRoute.getCarrier(), seaRoute.getValidTo());
     }
 
     // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
-    private RentEntity findRentForRouteByCity(String startCity, String endCity, String eqpt) {
-        RentEntity rent = rentRepository.findByPolAndPodAndSize(startCity, endCity, eqpt);
-        if (rent != null) return rent;
-
-
-        String startPol = determinePolForCity(startCity);
-        String endPod = determinePodForCity(endCity);
-
-        if (startPol != null && endPod != null) {
-            rent = rentRepository.findByPolAndPodAndSize(startPol, endPod, eqpt);
-            if (rent != null) return rent;
-        }
-
-
-        return null;
-
-    }
+//    private RentEntity findRentForRouteByCity(String startCity, String endCity, String eqpt) {
+//        RentEntity rent = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startCity, endCity, eqpt);
+//        if (rent != null) return rent;
+//
+//
+//        String startPol = determinePolForCity(startCity);
+//        String endPod = determinePodForCity(endCity);
+//
+//        if (startPol != null && endPod != null) {
+//            rent = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startPol, endPod, eqpt);
+//            if (rent != null) return rent;
+//        }
+//
+//
+//        return null;
+//
+//    }
 
     private DropOffEntity getDropOffEntity(List<Route> routes) {
         for (Route route : routes) {
@@ -627,15 +627,15 @@ public class RouteServiceImpl implements RouteService {
     /**
      * Расчет стоимости аренды контейнера.
      */
-    private int getContainerRentCost(Route route) {
-        if (rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
-            RentEntity rentCost = rentRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()); // Константа для аренды контейнера.
-            log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
-                    route.getPol(), route.getPod(), rentCost.getFilo());
-            return rentCost.getFilo();
-        }
-        return 0;
-    }
+//    private int getContainerRentCost(Route route) {
+//        if (rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(route.getPol(), route.getPod(), route.getEqpt()) != null) {
+//            RentEntity rentCost = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(route.getPol(), route.getPod(), route.getEqpt()); // Константа для аренды контейнера.
+//            log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
+//                    route.getPol(), route.getPod(), rentCost.getFilo());
+//            return rentCost.getFilo();
+//        }
+//        return 0;
+//    }
 
     /*
     * Расчёт стоимости drop off
