@@ -27,6 +27,7 @@ public class ExcessiveUseOfContainerEntity {
     private String randomText;
     private String amount;
     private String carrierName;
+    private String eqpt;
 
     @Override
     public final boolean equals(Object o) {

@@ -28,6 +28,7 @@ public class ScheduleEntity {
     private String dateTo;
     private String carrier;
     private String nameOfTheVessel;
+    private String eqpt;
 
     @Override
     public final boolean equals(Object o) {

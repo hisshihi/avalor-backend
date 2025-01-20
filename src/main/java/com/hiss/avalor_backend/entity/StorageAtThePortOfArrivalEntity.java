@@ -27,6 +27,7 @@ public class StorageAtThePortOfArrivalEntity {
     private String condition;
     private String randomText;
     private String amount;
+    private String eqpt;
 
     @Override
     public final boolean equals(Object o) {

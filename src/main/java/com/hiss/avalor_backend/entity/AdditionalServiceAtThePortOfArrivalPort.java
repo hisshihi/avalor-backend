@@ -25,6 +25,7 @@ public class AdditionalServiceAtThePortOfArrivalPort {
     private String port;
     private String condition;
     private String amount;
+    private String eqpt;
 
     @Override
     public final boolean equals(Object o) {
