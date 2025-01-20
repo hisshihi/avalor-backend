@@ -16,6 +16,7 @@ import org.hibernate.Hibernate;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -110,21 +111,17 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         clearCache();
 
-//        amoSubmit(dto.getCityFrom(), dto.getCityTo(), routeRailways, dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost(), application.getId());
+        amoSubmit(dto.getCityFrom(), dto.getCityTo(), application.getAllTotalCost(), dto.getAdditionalServiceIds(), user.get().getUsername(), dto.getAllTotalCost(), application.getId());
     }
 
-    private void amoSubmit(String cityFrom, String cityTo, List<Route> routes, List<Long> additionalServices, String username, Integer allTotalCost, Long applicationId) {
+    private void amoSubmit(String cityFrom, String cityTo, Integer totalCost, List<Long> additionalServices, String username, Integer allTotalCost, Long applicationId) {
         List<Integer> priceForRoutes = new ArrayList<>();
-        for (Route route : routes) {
-//            TODO: обовить вывод цены
-            priceForRoutes.add(0);
-        }
         List<Long> idsAdditionalServices = new ArrayList<>();
         for (Long additionalService : additionalServices) {
             idsAdditionalServices.add(additionalService);
         }
 
-        String title = "Id: " + applicationId + "\n" + cityFrom + " -> " + cityTo + "\n Цена перевозки: " + priceForRoutes + "\n Ids доп услуг: " + idsAdditionalServices + "\n Пользователь: " + username;
+        String title = "Id: " + applicationId + "\n" + cityFrom + " -> " + cityTo + "\n Цена перевозки: " + totalCost + "\n Ids доп услуг: " + idsAdditionalServices + "\n Пользователь: " + username;
         log.info("Заголовок: {}. Цена: {}", title, allTotalCost);
 
         AmoCRMLeadRequest amoCRMLeadRequest = new AmoCRMLeadRequest();

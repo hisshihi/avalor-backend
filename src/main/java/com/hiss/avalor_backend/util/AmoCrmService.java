@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
@@ -29,7 +30,8 @@ public class AmoCrmService {
      * @param lead объект сделки, содержащий необходимые данные.
      * @return Ответ от API amoCRM.
      */
-    public ResponseEntity<String> createLead(AmoCRMLeadRequest lead) {
+    @Async("asyncTaskExecutor")
+    public void createLead(AmoCRMLeadRequest lead) {
         // Установка заголовков запроса
         HttpHeaders headers = new HttpHeaders();
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
@@ -79,8 +81,6 @@ public class AmoCrmService {
         );
 
         log.info("Response: {}", response.getBody());
-
-        return response;
 
     }
 }
