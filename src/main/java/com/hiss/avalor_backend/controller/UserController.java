@@ -4,6 +4,9 @@ import com.hiss.avalor_backend.dto.UserResponseDto;
 import com.hiss.avalor_backend.entity.UserEntity;
 import com.hiss.avalor_backend.repo.UserRepo;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -31,6 +34,15 @@ public class UserController {
             return ResponseEntity.ok(findUser);
         }
     }
+
+
+    @PreAuthorize("hasAuthority('SCOPE_WRITE')")
+    @GetMapping("/admin/all")
+    public ResponseEntity<PagedModel<UserEntity>> getAll(Pageable pageable) {
+        Page<UserEntity> userEntities = userRepo.findAll(pageable);
+        return ResponseEntity.ok(new PagedModel<>(userEntities));
+    }
+
 
     @PreAuthorize("hasAuthority('SCOPE_READ')")
     @GetMapping
