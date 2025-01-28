@@ -268,12 +268,6 @@ public class RouteServiceImpl implements RouteService {
 
     }
 
-    private String addArrivalDate(String validTo) {
-        String[] dateRange = validTo.split("-");
-        String endDate = dateRange[1];
-        return endDate;
-    }
-
     private void saveUniqueCities(String cityFrom, String cityTo) {
         // Проверяем, существуют ли города
         boolean cityFromExists = citiesService.existsByCity(cityFrom);
@@ -347,6 +341,12 @@ public class RouteServiceImpl implements RouteService {
                 continue;
             }
 
+            // Проверка совместимости по exclusive и carrier
+            if (!checkExclusiveCompatibility(currentPath, route)) {
+                log.trace("Маршрут {}->{} не совместим по exclusive и carrier.", route.getCityFrom(), route.getCityTo());
+                continue;
+            }
+
             // Проверка согласованности портов (POL/POD)
             if (isValidPortSequence(currentPath, route)) {
                 log.info("Добавление маршрута: {} -> {}", route.getCityFrom(), route.getCityTo());
@@ -373,6 +373,34 @@ public class RouteServiceImpl implements RouteService {
                 log.warn("Маршрут {} -> {} не подходит по последовательности портов.", route.getCityFrom(), route.getCityTo());
             }
         }
+    }
+
+    private boolean checkExclusiveCompatibility(List<Route> currentPath, Route newRoute) {
+        String newCarrier = newRoute.getCarrier();
+        boolean newIsExclusive = newRoute.getExclusive() == 1;
+
+        // Проверяем все маршруты в текущем пути
+        for (Route existingRoute : currentPath) {
+            String existingCarrier = existingRoute.getCarrier();
+            boolean existingIsExclusive = existingRoute.getExclusive() == 1;
+
+            // Если новый маршрут эксклюзивный, он должен совпадать по carrier со всеми существующими
+            if (newIsExclusive && !existingCarrier.equals(newCarrier)) {
+                log.warn("Эксклюзивный маршрут {}->{} не совпадает по carrier с существующим {}->{}",
+                        newRoute.getCityFrom(), newRoute.getCityTo(),
+                        existingRoute.getCityFrom(), existingRoute.getCityTo());
+                return false;
+            }
+
+            // Если существующий маршрут эксклюзивный, новый должен совпадать по carrier
+            if (existingIsExclusive && !newCarrier.equals(existingCarrier)) {
+                log.warn("Маршрут {}->{} не совпадает по carrier с эксклюзивным маршрутом {}->{}",
+                        newRoute.getCityFrom(), newRoute.getCityTo(),
+                        existingRoute.getCityFrom(), existingRoute.getCityTo());
+                return false;
+            }
+        }
+        return true;
     }
 
     private boolean isValidPortSequence(List<Route> currentPath, Route nextRoute) {
@@ -514,45 +542,6 @@ public class RouteServiceImpl implements RouteService {
         );
     }
 
-    // Метод для поиска аренды по городам (с логикой из determinePolForCity и determinePodForCity)
-//    private RentEntity findRentForRouteByCity(String startCity, String endCity, String eqpt) {
-//        RentEntity rent = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startCity, endCity, eqpt);
-//        if (rent != null) return rent;
-//
-//
-//        String startPol = determinePolForCity(startCity);
-//        String endPod = determinePodForCity(endCity);
-//
-//        if (startPol != null && endPod != null) {
-//            rent = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(startPol, endPod, eqpt);
-//            if (rent != null) return rent;
-//        }
-//
-//
-//        return null;
-//
-//    }
-
-//    private DropOffEntity getDropOffEntity(List<Route> routes) {
-//        for (Route route : routes) {
-//            log.info("route with getDropOffEntity: {}", route);
-//            if ("Море".equals(route.getTransportType()) && "COC".equals(route.getContainerTypeSize())) {
-//                log.info("Найден морской маршрут с COC: {} -> {}, eqpt: {}", route.getCityFrom(), route.getCityTo(), route.getEqpt());
-//                DropOffEntity dropOffEntity = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-//                log.info("Drop off entity: {}", dropOffEntity);
-//
-//                if (dropOffEntity != null) {
-//                    log.info("Найден dropOffEntity: {}", dropOffEntity);
-//                    return dropOffEntity;
-//                } else {
-//                    log.warn("dropOffEntity НЕ НАЙДЕН для pol: {}, pod: {}, size: {}", route.getPol(), route.getPod(), route.getEqpt());
-//                    return null;
-//                }
-//            }
-//        }
-//        log.warn("Морской маршрут с COC не найден в этом пути.");
-//        return null;
-//    }
 
     private String determinePolForCity(String city) {
         // 1. Попробуем найти прямой маршрут, начинающийся в этом городе:
@@ -627,32 +616,6 @@ public class RouteServiceImpl implements RouteService {
         log.info("Итоговая стоимость сегмента {} -> {} = {}.", route.getCityFrom(), route.getCityTo(), routeCost);
         return routeCost;
     }
-
-    /**
-     * Расчет стоимости аренды контейнера.
-     */
-//    private int getContainerRentCost(Route route) {
-//        if (rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(route.getPol(), route.getPod(), route.getEqpt()) != null) {
-//            RentEntity rentCost = rentRepository.findByPolAndPodAndSizeAndCarrierAndValidTo(route.getPol(), route.getPod(), route.getEqpt()); // Константа для аренды контейнера.
-//            log.info("Стоимость аренды контейнера для маршрута {} -> {}: {}.",
-//                    route.getPol(), route.getPod(), rentCost.getFilo());
-//            return rentCost.getFilo();
-//        }
-//        return 0;
-//    }
-
-    /*
-    * Расчёт стоимости drop off
-    * */
-//    private int getContainerDropOffCost(Route route) {
-//        if (dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt()) != null) {
-//            DropOffEntity dropOffEntityCost = dropOffRepository.findByPolAndPodAndSize(route.getPol(), route.getPod(), route.getEqpt());
-//            log.info("Стоимость drop off для маршрута {} -> {}: {}",
-//                    route.getPol(), route.getPod(), dropOffEntityCost.getFilo());
-//            return dropOffEntityCost.getFilo();
-//        }
-//        return 0;
-//    }
 
     /**
      * Расчет стоимости обработки груза.
