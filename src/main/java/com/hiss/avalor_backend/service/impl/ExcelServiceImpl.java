@@ -248,7 +248,7 @@ public class ExcelServiceImpl implements ExcelService {
                     railway.setPol(getCellValue(row.getCell(2)));
                     railway.setPod(getCellValue(row.getCell(3)));
                     railway.setCarrier(getCellValue(row.getCell(4)));
-                    railway.setValidTo(getCellValue(row.getCell(5)));
+                    railway.setValidTo(processDate(getCellValue(row.getCell(5))));
                     railway.setTransportType("ЖД");
                     railway.setFilo20(Integer.parseInt(getCellValue(row.getCell(6))));
                     railway.setFilo20HC(Integer.parseInt(getCellValue(row.getCell(7))));
@@ -265,7 +265,7 @@ public class ExcelServiceImpl implements ExcelService {
                     sea.setPol(getCellValue(row.getCell(2)));
                     sea.setPod(getCellValue(row.getCell(3)));
                     sea.setCarrier(getCellValue(row.getCell(4)));
-                    sea.setValidTo(getCellValue(row.getCell(5)));
+                    sea.setValidTo(processDate(getCellValue(row.getCell(5))));
                     sea.setTransportType("Море");
                     sea.setEqpt(getCellValue(row.getCell(6)));
                     sea.setContainerTypeSize(getCellValue(row.getCell(7)));
@@ -281,7 +281,7 @@ public class ExcelServiceImpl implements ExcelService {
                     auto.setPol(getCellValue(row.getCell(2)));
                     auto.setPod(getCellValue(row.getCell(3)));
                     auto.setCarrier(getCellValue(row.getCell(4)));
-                    auto.setValidTo(getCellValue(row.getCell(5)));
+                    auto.setValidTo(processDate(getCellValue(row.getCell(5))));
                     auto.setTransportType("ЖД");
                     auto.setFilo20(Integer.parseInt(getCellValue(row.getCell(6))));
                     auto.setFilo20HC(Integer.parseInt(getCellValue(row.getCell(7))));
@@ -294,7 +294,7 @@ public class ExcelServiceImpl implements ExcelService {
                     dropOff.setPol(getCellValue(row.getCell(0))); // Поле POL
                     dropOff.setPod(getCellValue(row.getCell(1))); // Поле POD
                     dropOff.setCarrier(getCellValue(row.getCell(2))); // Перевозчик
-                    dropOff.setValidTo(getCellValue(row.getCell(3))); // Дата
+                    dropOff.setValidTo(processDate(getCellValue(row.getCell(3)))); // Дата
                     dropOff.setFilo(Integer.parseInt(getCellValue(row.getCell(4)))); // FILO
                     dropOff.setSize(getCellValue(row.getCell(5))); // Размер
                     dropOff.setFiloD(Integer.parseInt(getCellValue(row.getCell(6)))); // Filo dollar
@@ -304,7 +304,7 @@ public class ExcelServiceImpl implements ExcelService {
                     rent.setPod(getCellValue(row.getCell(1))); // Поле POD
                     rent.setCarrier(getCellValue(row.getCell(2))); // Перевозчик
                     rent.setSize(getCellValue(row.getCell(3))); // Размер
-                    rent.setValidTo(getCellValue(row.getCell(4))); // Дата
+                    rent.setValidTo(processDate(getCellValue(row.getCell(4)))); // Дата
                     rent.setFilo(Integer.parseInt(getCellValue(row.getCell(5)))); // FILO
                     rent.setFiloD(Integer.parseInt(getCellValue(row.getCell(6)))); // FILO dollar
                     routes.add(route);
@@ -343,6 +343,28 @@ public class ExcelServiceImpl implements ExcelService {
             }
         }
         return routes;
+    }
+
+    private String processDate(String date) {
+        if (date == null || date.trim().isEmpty()) {
+            return null;
+        }
+
+        if (date.contains("*")) {
+            // Заменяем только символ * на 2099
+            return date.replace("*", "01.12.2099");
+        } else if (date.contains("-")) {
+            String[] parts = date.split("-");
+            if (parts.length == 2) {
+                // Заменяем только символ * в конце диапазона
+                if (parts[1].contains("*")) {
+                    parts[1] = parts[1].replace("*", "01.12.2099");
+                    return parts[0].trim() + "-" + parts[1].trim();
+                }
+                return date;
+            }
+        }
+        return date;
     }
 
     private String getCellValue(Cell cell) {
